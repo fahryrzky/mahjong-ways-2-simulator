@@ -30,36 +30,51 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: fixed;
+      touch-action: manipulation;
+    }
+
     body {
       background: #06070a;
       color: var(--text-main);
-      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow-x: hidden;
+      margin: 0;
       padding: 0;
     }
 
     /* GAME VIEWPORT (MURNI PERSIS PG SOFT MAHJONG WAYS 2) */
     .game-viewport {
-      width: 440px;
-      max-width: 100vw;
-      height: 100vh;
-      max-height: 860px;
+      width: 100%;
+      max-width: 440px;
+      height: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
       background: radial-gradient(circle at 50% 15%, #351408 0%, #170906 60%, #0a0b12 100%);
       display: flex;
       flex-direction: column;
       position: relative;
       overflow: hidden;
       box-shadow: 0 0 30px rgba(0,0,0,0.9);
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    @media (min-width: 450px) {
+    @media (min-width: 450px) and (min-height: 700px) {
+      body {
+        position: static;
+        min-height: 100vh;
+      }
       .game-viewport {
         border-radius: 20px;
         border: 2px solid #6b4020;
         height: 94vh;
+        max-height: 860px;
       }
     }
 
@@ -68,24 +83,54 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 14px;
+      padding: 6px 12px;
       background: linear-gradient(180deg, #2b1107 0%, rgba(20,9,6,0.6) 100%);
       border-bottom: 1px solid #4a2814;
+      flex-shrink: 0;
     }
 
     .game-logo {
-      font-size: 14px;
+      font-size: clamp(12px, 3.5vw, 14px);
       font-weight: 900;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       color: #ffe58f;
       text-shadow: 0 0 8px rgba(245, 179, 36, 0.7);
+      display: flex;
+      align-items: center;
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .pg-badge {
-      font-size: 10px;
+      font-size: clamp(8.5px, 2.2vw, 10px);
       color: #a89279;
       font-weight: 700;
       letter-spacing: 0.5px;
+    }
+
+    .top-sound-btn {
+      background: rgba(37, 26, 20, 0.85);
+      border: 1px solid #5a381e;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      transition: all 0.2s;
+    }
+
+    .top-sound-btn.active {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 8px rgba(245, 179, 36, 0.4);
     }
 
     /* Free Spins Mode Banner */
@@ -93,13 +138,14 @@
       background: linear-gradient(90deg, #780606 0%, #d42222 50%, #780606 100%);
       color: #fff;
       text-align: center;
-      font-size: 12px;
+      font-size: clamp(10px, 2.6vw, 12px);
       font-weight: 900;
-      letter-spacing: 1.5px;
-      padding: 5px;
+      letter-spacing: 1px;
+      padding: 4px 6px;
       display: none;
       box-shadow: 0 0 15px rgba(230, 57, 70, 0.8);
       border-bottom: 1px solid #ff7875;
+      flex-shrink: 0;
     }
 
     .mode-banner.active {
@@ -112,11 +158,12 @@
       display: flex;
       justify-content: space-around;
       background: linear-gradient(90deg, #3d1b09 0%, #572910 50%, #3d1b09 100%);
-      padding: 8px 12px;
+      padding: 4px 8px;
       border-bottom: 2px solid #a36528;
-      margin: 8px 10px 4px 10px;
-      border-radius: 12px;
+      margin: 3px 8px 2px 8px;
+      border-radius: 10px;
       box-shadow: inset 0 0 12px rgba(0,0,0,0.7);
+      flex-shrink: 0;
     }
 
     .mult-item {
@@ -125,17 +172,17 @@
       align-items: center;
       color: #bfa181;
       font-weight: 900;
-      font-size: 14px;
-      padding: 3px 12px;
-      border-radius: 8px;
+      font-size: clamp(11.5px, 3.2vw, 13.5px);
+      padding: 2px 8px;
+      border-radius: 6px;
       transition: all 0.25s ease;
     }
 
     .mult-item.active {
       color: #fff;
       background: linear-gradient(180deg, #ffcc00 0%, #b87b08 100%);
-      transform: scale(1.18);
-      box-shadow: 0 0 16px #ffcc00;
+      transform: scale(1.15);
+      box-shadow: 0 0 14px #ffcc00;
       text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
 
@@ -144,45 +191,58 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 2px 14px 4px 14px;
-      font-size: 11px;
+      padding: 1px 12px 2px 12px;
+      font-size: clamp(8.5px, 2.4vw, 10.5px);
       color: #d1b18a;
       font-weight: 700;
+      flex-shrink: 0;
     }
 
     /* 5-Reel Matrix: 4-5-5-5-4 (2,000 WAYS) */
     .reels-board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
-      padding: 8px 10px;
+      gap: 4px;
+      padding: 4px 6px;
       background: rgba(14, 7, 7, 0.92);
-      margin: 0 10px;
-      border-radius: 14px;
+      margin: 2px 8px;
+      border-radius: 12px;
       border: 1px solid #5a381e;
       position: relative;
       flex: 1;
+      min-height: 0; /* Penting agar flex item reels board bisa mengecil sesuai layar HP */
       box-shadow: inset 0 0 25px rgba(0,0,0,0.95);
-      align-content: center;
+      align-content: stretch;
     }
 
     .reel-column {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
       position: relative;
+      height: 100%;
     }
 
     .reel-column.col-edge {
-      padding-top: 72px;
+      padding-top: 0; /* Digantikan oleh .tile-spacer yang fleksibel */
+    }
+
+    .tile-spacer {
+      flex: 1;
+      min-height: 0;
+      max-height: 72px;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .tile-slot {
-      height: 68px;
+      flex: 1;
+      min-height: 0;
+      max-height: 72px;
       background: linear-gradient(145deg, #fffdf8 0%, #e6d8ba 100%);
-      border-radius: 8px;
-      border: 2px solid #b89b72;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 2px 2px #fff;
+      border-radius: 7px;
+      border: 1.5px solid #b89b72;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 1px #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -190,30 +250,31 @@
       position: relative;
       transition: transform 0.2s, filter 0.2s, opacity 0.2s;
       user-select: none;
+      overflow: hidden;
     }
 
     .tile-slot.top-row {
       background: linear-gradient(145deg, #fff5d6 0%, #e8cf8d 100%);
       border-color: #d4a03e;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 0 6px rgba(245, 179, 36, 0.4);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 0 6px rgba(245, 179, 36, 0.4);
     }
 
     .tile-slot.gold {
-      border: 3px solid #ffcc00 !important;
-      box-shadow: 0 0 14px rgba(255, 204, 0, 0.9), inset 0 0 10px rgba(255, 204, 0, 0.6) !important;
+      border: 2.5px solid #ffcc00 !important;
+      box-shadow: 0 0 12px rgba(255, 204, 0, 0.9), inset 0 0 8px rgba(255, 204, 0, 0.6) !important;
       animation: goldGlow 1.2s infinite alternate;
     }
 
     .tile-slot.gold::after {
       content: "GOLD";
       position: absolute;
-      top: 2px;
-      right: 3px;
-      font-size: 7px;
+      top: 1px;
+      right: 2px;
+      font-size: 6.5px;
       background: linear-gradient(180deg, #d48806, #874d00);
       color: #fff;
-      padding: 1px 3px;
-      border-radius: 3px;
+      padding: 1px 2px;
+      border-radius: 2px;
       font-weight: 900;
       letter-spacing: 0.5px;
     }
@@ -262,16 +323,16 @@
     }
 
     .tile-slot .tile-icon {
-      font-size: 30px;
+      font-size: clamp(20px, 4.2vh, 28px);
       line-height: 1;
       filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
     }
 
     .tile-slot .tile-name {
-      font-size: 8px;
+      font-size: clamp(6.5px, 1.2vh, 8px);
       font-weight: 800;
       color: #2b2b2b;
-      margin-top: 3px;
+      margin-top: 1px;
     }
 
     .celebration-overlay {
@@ -314,19 +375,19 @@
     }
 
     .game-hud {
-      padding: 10px 14px;
+      padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px)) 10px;
       background: linear-gradient(180deg, #1f120c 0%, #0d0605 100%);
       border-top: 2px solid #5a381e;
-      margin-top: auto;
+      flex-shrink: 0;
     }
 
     .stats-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       background: rgba(0,0,0,0.65);
-      padding: 6px 12px;
-      border-radius: 10px;
+      padding: 4px 10px;
+      border-radius: 8px;
       border: 1px solid #3d2315;
     }
 
@@ -336,14 +397,14 @@
     }
 
     .stat-label {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--text-muted);
       text-transform: uppercase;
       font-weight: 600;
     }
 
     .stat-val {
-      font-size: 15px;
+      font-size: 13.5px;
       font-weight: 900;
       color: var(--gold-bright);
     }
@@ -352,29 +413,39 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 6px;
     }
 
     .bet-selector {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 3px;
       background: #251a14;
-      padding: 4px 8px;
+      padding: 3px 6px;
       border-radius: 8px;
       border: 1px solid #4a2f1c;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .bet-info-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
     }
 
     .bet-btn {
       background: #472b17;
       border: none;
       color: #fff;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 16px;
+      font-size: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -382,21 +453,24 @@
 
     .spin-btn {
       flex: 1;
-      height: 52px;
+      min-width: 0;
+      height: 46px;
       background: linear-gradient(180deg, #52c41a 0%, #237804 100%);
       border: 2px solid #95de64;
-      border-radius: 26px;
+      border-radius: 23px;
       color: white;
-      font-size: 17px;
+      font-size: clamp(14px, 3.8vw, 16px);
       font-weight: 900;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(82, 196, 26, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 5px;
       transition: transform 0.1s;
+      padding: 0 8px;
+      white-space: nowrap;
     }
 
     .spin-btn:active {
@@ -420,16 +494,17 @@
 
     .quick-toggles {
       display: flex;
-      gap: 5px;
+      gap: 4px;
+      flex-shrink: 0;
     }
 
     .toggle-btn {
       background: #251a14;
       border: 1px solid #5a381e;
       color: #aaa;
-      padding: 6px 8px;
+      padding: 6px 7px;
       border-radius: 8px;
-      font-size: 11px;
+      font-size: 10.5px;
       cursor: pointer;
       font-weight: 700;
       white-space: nowrap;
@@ -445,15 +520,15 @@
     /* Ways Calculation Dynamic Toast */
     .ways-toast {
       position: absolute;
-      top: 60px;
+      top: 48px;
       left: 50%;
       transform: translateX(-50%) translateY(-10px);
       background: rgba(18, 10, 8, 0.95);
       border: 1.5px solid var(--gold-primary);
       color: #fff;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 11.5px;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: clamp(10px, 2.8vw, 11.5px);
       font-weight: 800;
       display: flex;
       align-items: center;
@@ -464,11 +539,28 @@
       transition: all 0.25s ease;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.85), 0 0 12px rgba(255, 204, 0, 0.4);
       white-space: nowrap;
+      max-width: 90%;
     }
 
     .ways-toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
+    }
+
+    /* Optimal Responsive Layout for Small Screens */
+    @media (max-height: 680px) {
+      .game-top-bar { padding: 4px 10px; }
+      .multiplier-bar { margin: 2px 8px 1px 8px; padding: 2px 6px; }
+      .ways-badge-bar { padding: 1px 10px; font-size: 8.5px; }
+      .reels-board { padding: 2px 4px; gap: 3px; margin: 1px 6px; }
+      .reel-column { gap: 3px; }
+      .tile-slot .tile-icon { font-size: 18px; }
+      .tile-slot .tile-name { font-size: 6px; margin-top: 0; }
+      .stats-row { margin-bottom: 4px; padding: 2px 8px; }
+      .stat-val { font-size: 12px; }
+      .spin-btn { height: 40px; font-size: 13.5px; }
+      .bet-btn { width: 24px; height: 24px; font-size: 13.5px; }
+      .toggle-btn { padding: 4px 5px; font-size: 9.5px; }
     }
 
     /* Modals for Bet Selector & Auto Spin */
@@ -600,7 +692,10 @@
         MAHJONG WAYS 2
         <span class="status-dot" id="serverStatusDot" title="Server Status"></span>
       </div>
-      <div class="pg-badge">POCKET GAMES SOFT</div>
+      <div class="top-bar-right">
+        <span class="pg-badge">POCKET GAMES SOFT</span>
+        <button class="top-sound-btn active" id="soundToggle" onclick="toggleSound()" title="Suara">🔊</button>
+      </div>
     </div>
 
     <div class="mode-banner" id="freeSpinsBanner">
@@ -647,9 +742,9 @@
       <div class="controls-row">
         <div class="bet-selector" onclick="openBetModal()" title="Klik untuk pilih taruhan">
           <button class="bet-btn" onclick="event.stopPropagation(); adjustBet(-1)">-</button>
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px;">
-            <span style="font-size: 13px; font-weight: bold;" id="betValShort">10k</span>
-            <span style="font-size: 8px; color: #ffcc00; font-weight: 800; display: none;" id="turboMultiplierBadge">⚡2X</span>
+          <div class="bet-info-center">
+            <span style="font-size: 12.5px; font-weight: bold;" id="betValShort">10k</span>
+            <span style="font-size: 7.5px; color: #ffcc00; font-weight: 800; display: none;" id="turboMultiplierBadge">⚡2X</span>
           </div>
           <button class="bet-btn" onclick="event.stopPropagation(); adjustBet(1)">+</button>
         </div>
@@ -661,7 +756,6 @@
         <div class="quick-toggles">
           <button class="toggle-btn" id="turboToggle" onclick="toggleTurbo()" title="Turbo Mode (Taruhan x2)">⚡ TURBO</button>
           <button class="toggle-btn" id="autoToggle" onclick="openAutoSpinModal()" title="Auto Spin">🔄 AUTO</button>
-          <button class="toggle-btn" id="soundToggle" onclick="toggleSound()">🔊 ON</button>
         </div>
       </div>
     </div>
@@ -796,8 +890,11 @@
 
     function toggleSound() {
       soundEnabled = !soundEnabled;
-      document.getElementById('soundToggle').innerText = soundEnabled ? '🔊 ON' : '🔇 OFF';
-      document.getElementById('soundToggle').classList.toggle('active', soundEnabled);
+      const btn = document.getElementById('soundToggle');
+      if (btn) {
+        btn.innerText = soundEnabled ? '🔊' : '🔇';
+        btn.classList.toggle('active', soundEnabled);
+      }
     }
 
     /* =========================================================
@@ -847,6 +944,13 @@
         if (c === 0 || c === 4) colDiv.classList.add('col-edge');
         colDiv.id = `col-${c}`;
         gridMatrix[c] = [];
+
+        // Prepend spacer pada edge column (Reel 0 & 4) agar 4 ubin sejajar presisi dengan baris 1-4 pada reel 1, 2, 3
+        if (c === 0 || c === 4) {
+          const spacer = document.createElement('div');
+          spacer.className = 'tile-spacer';
+          colDiv.appendChild(spacer);
+        }
 
         for (let r = 0; r < reelRows[c]; r++) {
           const slot = document.createElement('div');
