@@ -339,7 +339,7 @@
     <header>
       <div>
         <span class="badge-admin">KONTROL BACKEND (ANAK)</span>
-        <span style="background: #237804; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">v2.0 (ANTI-BOCOR AKTIF)</span>
+        <span style="background: #237804; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">v2.1 (BIG WIN & ZONK AKTIF)</span>
         <h2 style="font-size: 17px; margin-top: 4px;">Remote Pengendali Mahjong Ways 2</h2>
       </div>
 
@@ -411,9 +411,9 @@
           <span>2 Scatter muncul, Reel 3 melambat dengan debar jantung lalu meleset 1 baris.</span>
         </button>
 
-        <button class="decision-btn" onclick="sendOutcomeDecision('win_hook')">
-          <strong style="color: var(--green);">🎣 PANCINGAN MENANG</strong>
-          <span>Menang Rp 25.000 agar Ayah merasa 'hoki' dan terus memasang.</span>
+        <button class="decision-btn" onclick="sendOutcomeDecision('big_win')" style="border-color: #ffec3d; background: #262113;">
+          <strong style="color: #ffec3d;">💰 MENANG BESAR (BIG WIN)</strong>
+          <span>Kaskade 16-Ways Fa & Wild, menang Rp 300.000 - Rp 500.000 (Sensational Win!).</span>
         </button>
 
         <button class="decision-btn" onclick="sendOutcomeDecision('scatter_bonus')">
@@ -437,6 +437,12 @@
         </div>
         <div class="preset-chip" id="pLdw" onclick="setPresetMode('ldw')">
           🎭 Selalu Menang Palsu (LDW)
+        </div>
+        <div class="preset-chip" id="pBigWin" onclick="setPresetMode('big_win')" style="border-color: #ffec3d; color: #ffe58f;">
+          💰 Selalu Menang Besar (Big Win)
+        </div>
+        <div class="preset-chip" id="pOneShotBigWin" onclick="setOneShot('big_win')" style="background: #2b220d; border-color: #faad14; color: #ffec3d; font-weight: 900;">
+          ⚡ Kunci 1x Big Win (Putaran Depan)
         </div>
         <div class="preset-chip" id="pReal" onclick="setPresetMode('real_slot')">
           🎰 Acak Kasir Normal (85% Kalah/LDW, 15% Menang)
@@ -467,7 +473,8 @@
   <script>
     let peer = null;
     let connectedPlayer = null;
-    let currentPreset = 'manual'; // 'manual', 'zonk', 'ldw', 'real_slot'
+    let currentPreset = 'manual'; // 'manual', 'zonk', 'ldw', 'big_win', 'real_slot'
+    let oneShotOutcome = null;
     let countdownTimer = null;
     let spinCount = 0;
     const initialDeposit = 100000;
@@ -559,6 +566,18 @@
       }
     }
 
+    function setOneShot(outcome) {
+      oneShotOutcome = outcome;
+      if (connectedPlayer && connectedPlayer.open) {
+        connectedPlayer.send({
+          type: 'SET_ONE_SHOT',
+          outcome: outcome
+        });
+      }
+      addLog(`Kunci 1x Putaran Depan: [${outcome.toUpperCase()}]`, 'win');
+      alert(`Putaran ayah berikutnya DIJAMIN MENANG BESAR (BIG WIN)!\nSetelah putaran itu selesai, otomatis kembali ke mode sebelumnya.`);
+    }
+
     function onSpinRequestedByPlayer() {
       const box = document.getElementById('actionBox');
       const title = document.getElementById('actionStatusText');
@@ -573,15 +592,20 @@
       // Suara notifikasi kecil di HP anak
       playAdminChime();
 
+      if (oneShotOutcome) {
+        const out = oneShotOutcome;
+        oneShotOutcome = null;
+        sendOutcomeDecision(out);
+        return;
+      }
+
       if (currentPreset !== 'manual') {
-        // Mode otomatis
-        let autoOutcome = 'zonk';
-        if (currentPreset === 'ldw') autoOutcome = 'ldw';
-        else if (currentPreset === 'real_slot') {
+        let autoOutcome = currentPreset;
+        if (currentPreset === 'real_slot') {
           const r = Math.random();
-          if (r < 0.5) autoOutcome = 'zonk';
+          if (r < 0.6) autoOutcome = 'zonk';
           else if (r < 0.85) autoOutcome = 'ldw';
-          else autoOutcome = 'win_hook';
+          else autoOutcome = 'big_win';
         }
         sendOutcomeDecision(autoOutcome);
         return;
@@ -658,14 +682,18 @@
 
     function setPresetMode(mode) {
       currentPreset = mode;
-      ['pManual', 'pZonk', 'pLdw', 'pReal'].forEach(id => {
-        document.getElementById(id).classList.remove('active');
+      ['pManual', 'pZonk', 'pLdw', 'pBigWin', 'pReal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
       });
 
-      if (mode === 'manual') document.getElementById('pManual').classList.add('active');
-      else if (mode === 'zonk') document.getElementById('pZonk').classList.add('active');
-      else if (mode === 'ldw') document.getElementById('pLdw').classList.add('active');
-      else if (mode === 'real_slot') document.getElementById('pReal').classList.add('active');
+      const activeEl = document.getElementById(
+        mode === 'manual' ? 'pManual' :
+        mode === 'zonk' ? 'pZonk' :
+        mode === 'ldw' ? 'pLdw' :
+        mode === 'big_win' ? 'pBigWin' : 'pReal'
+      );
+      if (activeEl) activeEl.classList.add('active');
 
       // Sinkronisasikan preset ke pemain secara langsung
       if (connectedPlayer && connectedPlayer.open) {
@@ -680,7 +708,10 @@
 
     function updateEduSheet(outcome) {
       const sheet = document.getElementById('eduSheet');
-      if (outcome === 'ldw') {
+      if (outcome === 'big_win') {
+        sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Menang Besar / Big Win):</b><br>
+        <i>"Yah, lihat barusan dapat BIG WIN ratusan ribu! Ini adalah trik kasir paling mematikan: bandar sengaja memberi kemenangan besar satu kali agar otak Ayah kecanduan dopamin dan yakin bahwa hari ini sedang 'hoki'. Coba Ayah perhatikan, setelah menang besar ini, uang tersebut akan habis kembali dalam 10-20 putaran ke depan jika terus dimainkan."</i>`;
+      } else if (outcome === 'ldw') {
         sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Menang Palsu):</b><br>
         <i>"Yah, barusan lihat kan musiknya heboh dan ubinnya pecah berkali-kali? Tapi coba cek saldo Ayah, uang yang kembali cuma 3.500 padahal pasang 10 ribu. Artinya barusan Ayah **RUGI 6.500 rupiah**, tapi musiknya dibuat seolah-olah Ayah menang. Inilah trik bandar biar Ayah merasa hoki terus padahal uangnya disedot."</i>`;
       } else if (outcome === 'near_miss') {

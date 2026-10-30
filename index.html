@@ -992,7 +992,9 @@
         updateBalanceUI(spinTotalWin);
         playSound('win_cheer');
 
-        if (spinTotalWin >= currentBet * 2) {
+        if (spinTotalWin >= currentBet * 10) {
+          showCelebration("SENSATIONAL WIN!", `Rp ${spinTotalWin.toLocaleString('id-ID')}`);
+        } else if (spinTotalWin >= currentBet * 2) {
           showCelebration("BIG WIN!", `Rp ${spinTotalWin.toLocaleString('id-ID')}`);
         } else if (outcome === 'ldw') {
           showCelebration("WIN!", `Rp ${spinTotalWin.toLocaleString('id-ID')}`);
@@ -1101,17 +1103,32 @@
         gridMatrix[0][1] = { ...SYMBOLS[5], isGold: false };
         gridMatrix[1][1] = { ...SYMBOLS[5], isGold: true }; // Emas!
         gridMatrix[2][1] = { ...SYMBOLS[5], isGold: false };
-      } else if (outcome === 'win_hook') {
-        // Pancingan Menang: Fa (Green dragon, payout 10) connect di 3 reel
+      } else if (outcome === 'big_win' || outcome === 'win_hook') {
+        // 💰 MENANG BESAR (SENSATIONAL BIG WIN):
+        // Sambungan ubin Naga Hijau (Fa) 5 Reel dengan 16 WAYS + Transformasi Wild Emas!
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
             gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
           }
         }
+        // Reel 0: 2 ubin Fa (baris 1, 2)
         gridMatrix[0][1] = { ...SYMBOLS[0], isGold: false };
-        gridMatrix[1][1] = { ...SYMBOLS[0], isGold: true };
-        gridMatrix[2][1] = { ...SYMBOLS[0], isGold: true };
+        gridMatrix[0][2] = { ...SYMBOLS[0], isGold: false };
+
+        // Reel 1: 2 ubin Fa (baris 1 biasa, baris 2 EMAS)
+        gridMatrix[1][1] = { ...SYMBOLS[0], isGold: false };
+        gridMatrix[1][2] = { ...SYMBOLS[0], isGold: true };
+
+        // Reel 2: 2 ubin Fa (baris 1 biasa, baris 2 EMAS)
+        gridMatrix[2][1] = { ...SYMBOLS[0], isGold: false };
+        gridMatrix[2][2] = { ...SYMBOLS[0], isGold: true };
+
+        // Reel 3: 2 ubin Fa (baris 1, 2)
         gridMatrix[3][1] = { ...SYMBOLS[0], isGold: false };
+        gridMatrix[3][2] = { ...SYMBOLS[0], isGold: false };
+
+        // Reel 4: 1 ubin Fa (baris 1)
+        gridMatrix[4][1] = { ...SYMBOLS[0], isGold: false };
       } else if (outcome === 'scatter_bonus') {
         // 3 Scatter memicu 10 Free Spins
         for (let c = 0; c < 5; c++) {
@@ -1142,8 +1159,12 @@
         const missing = reelRows[c] - remaining.length;
         const newTiles = [];
         for (let i = 0; i < missing; i++) {
-          // Isi ubin baru dengan ubin yang dijamin aman agar tidak terjadi ledakan acak tak terkontrol
-          newTiles.push(getGuaranteedZonkTile(c, i));
+          if (outcome === 'big_win' && (c === 0 || c === 3)) {
+            // Drop Zhong (Red Dragon) so Wilds connect for second cascade
+            newTiles.push({ ...SYMBOLS[1], isGold: false });
+          } else {
+            newTiles.push(getGuaranteedZonkTile(c, i));
+          }
         }
 
         gridMatrix[c] = [...newTiles, ...remaining];
