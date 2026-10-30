@@ -339,7 +339,7 @@
     <header>
       <div>
         <span class="badge-admin">KONTROL BACKEND (ANAK)</span>
-        <span style="background: #237804; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">v2.2 (AUTO SPIN, TURBO 2X & CARA MENANG DINAMIS)</span>
+        <span style="background: #237804; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">v2.3 (CASCADE x10 & SUPER MULTIPLIER)</span>
         <h2 style="font-size: 17px; margin-top: 4px;">Remote Pengendali Mahjong Ways 2</h2>
       </div>
 
@@ -414,8 +414,13 @@
         </button>
 
         <button class="decision-btn" onclick="sendOutcomeDecision('big_win')" style="border-color: #ffec3d; background: #262113;">
-          <strong style="color: #ffec3d;">💰 MENANG BESAR (BIG WIN DINAMIS)</strong>
-          <span>Simbol acak (Fa/Zhong/Bai) & 8-48 Ways kaskade Wild, hasil dinamis dan tidak pernah sama!</span>
+          <strong style="color: #ffec3d;">💰 BIG WIN (Pecah 4x Sampai x5)</strong>
+          <span>Runtuh beruntun 4 tahap (x1 -> x2 -> x3 -> x5) dengan transformasi Wild emas!</span>
+        </button>
+
+        <button class="decision-btn" onclick="sendOutcomeDecision('cascade_x10')" style="border-color: #ff4d4f; background: #2e1114;">
+          <strong style="color: #ff4d4f;">🔥 PECAH SAMPAI x10 (SUPER CASCADE)</strong>
+          <span>Runtuh 4x beruntun sampai puncak x10 menyala terang di layar Ayah!</span>
         </button>
 
         <button class="decision-btn" onclick="sendOutcomeDecision('scatter_bonus')">
@@ -441,14 +446,25 @@
           🎭 Selalu Menang Palsu (LDW)
         </div>
         <div class="preset-chip" id="pBigWin" onclick="setPresetMode('big_win')" style="border-color: #ffec3d; color: #ffe58f;">
-          💰 Selalu Menang Besar (Big Win)
+          💰 Selalu Big Win (Sampai x5)
         </div>
-        <div class="preset-chip" id="pOneShotBigWin" onclick="setOneShot('big_win')" style="background: #2b220d; border-color: #faad14; color: #ffec3d; font-weight: 900;">
-          ⚡ Kunci 1x Big Win (Putaran Depan)
+        <div class="preset-chip" id="pCascadeX10" onclick="setPresetMode('cascade_x10')" style="border-color: #ff4d4f; color: #ff7875;">
+          🔥 Selalu Pecah x10
+        </div>
+        <div class="preset-chip" id="pOneShotBigWin" onclick="setOneShot('cascade_x10')" style="background: #2b220d; border-color: #faad14; color: #ffec3d; font-weight: 900;">
+          ⚡ Kunci 1x Pecah x10 (Putaran Depan)
         </div>
         <div class="preset-chip" id="pReal" onclick="setPresetMode('real_slot')">
           🎰 Acak Kasir Normal (85% Kalah/LDW, 15% Menang)
         </div>
+      </div>
+
+      <!-- Toggle Pengali x10 di Putaran Biasa -->
+      <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #283047; display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="toggleSuperMulti" onchange="toggleSuperMultiplierMode(this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
+        <label for="toggleSuperMulti" style="font-size: 12px; color: #ffe58f; cursor: pointer; font-weight: 700;">
+          ⚡ Tampilkan Tangga Pengali x10 di Putaran Biasa (x1 - x2 - x5 - x10)
+        </label>
       </div>
     </div>
 
@@ -741,7 +757,7 @@
 
     function setPresetMode(mode) {
       currentPreset = mode;
-      ['pManual', 'pZonk', 'pLdw', 'pBigWin', 'pReal'].forEach(id => {
+      ['pManual', 'pZonk', 'pLdw', 'pBigWin', 'pCascadeX10', 'pReal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('active');
       });
@@ -750,7 +766,8 @@
         mode === 'manual' ? 'pManual' :
         mode === 'zonk' ? 'pZonk' :
         mode === 'ldw' ? 'pLdw' :
-        mode === 'big_win' ? 'pBigWin' : 'pReal'
+        mode === 'big_win' ? 'pBigWin' :
+        mode === 'cascade_x10' ? 'pCascadeX10' : 'pReal'
       );
       if (activeEl) activeEl.classList.add('active');
 
@@ -765,11 +782,24 @@
       addLog(`Preset diubah ke: [${mode.toUpperCase()}]`, mode === 'zonk' ? 'zonk' : 'win');
     }
 
+    function toggleSuperMultiplierMode(enabled) {
+      if (connectedPlayer && connectedPlayer.open) {
+        connectedPlayer.send({
+          type: 'SET_SUPER_MULTIPLIER',
+          enabled: enabled
+        });
+      }
+      addLog(`Tangga Pengali x10 di Putaran Biasa: [${enabled ? 'AKTIF' : 'NONAKTIF'}]`, 'win');
+    }
+
     function updateEduSheet(outcome) {
       const sheet = document.getElementById('eduSheet');
-      if (outcome === 'big_win') {
+      if (outcome === 'cascade_x10') {
+        sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Pecah Sampai x10 / Super Cascade):</b><br>
+        <i>"Yah, lihat barusan ubinnya pecah 4 kali berturut-turut sampai menyala di pengali x10 kan? Perhatikan baik-baik: di slot aslinya, pengali x10 ini probabilitas keluarnya di bawah 0.05% (sangat mustahil). Bandar sering pasang video orang pecah x10 di medsos sebagai umpan promosi, padahal di dunia nyata ribuan pemain menghabiskan jutaan rupiah tanpa pernah menyentuh pengali x10 sekalipun!"</i>`;
+      } else if (outcome === 'big_win') {
         sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Menang Besar / Big Win):</b><br>
-        <i>"Yah, lihat barusan dapat BIG WIN ratusan ribu! Ini adalah trik kasir paling mematikan: bandar sengaja memberi kemenangan besar satu kali agar otak Ayah kecanduan dopamin dan yakin bahwa hari ini sedang 'hoki'. Coba Ayah perhatikan, setelah menang besar ini, uang tersebut akan habis kembali dalam 10-20 putaran ke depan jika terus dimainkan."</i>`;
+        <i>"Yah, lihat barusan dapat BIG WIN ratusan ribu runtuh berturut-turut sampai x5! Ini adalah trik kasir paling mematikan: bandar sengaja memberi kemenangan besar satu kali agar otak Ayah kecanduan dopamin dan yakin bahwa hari ini sedang 'hoki'. Coba Ayah perhatikan, setelah menang besar ini, uang tersebut akan habis kembali dalam 10-20 putaran ke depan jika terus dimainkan."</i>`;
       } else if (outcome === 'ldw') {
         sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Menang Palsu):</b><br>
         <i>"Yah, barusan lihat kan musiknya heboh dan ubinnya pecah berkali-kali? Tapi coba cek saldo Ayah, uang yang kembali cuma 3.500 padahal pasang 10 ribu. Artinya barusan Ayah **RUGI 6.500 rupiah**, tapi musiknya dibuat seolah-olah Ayah menang. Inilah trik bandar biar Ayah merasa hoki terus padahal uangnya disedot."</i>`;
