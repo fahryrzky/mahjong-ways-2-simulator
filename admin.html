@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Backend Admin - Remote Control Mahjong Ways 2</title>
   <!-- PeerJS for live WebRTC communication with player -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -336,6 +339,7 @@
     <header>
       <div>
         <span class="badge-admin">KONTROL BACKEND (ANAK)</span>
+        <span style="background: #237804; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">v2.0 (ANTI-BOCOR AKTIF)</span>
         <h2 style="font-size: 17px; margin-top: 4px;">Remote Pengendali Mahjong Ways 2</h2>
       </div>
 
@@ -508,8 +512,10 @@
     }
 
     function updatePlayerGameUrl() {
-      const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '').replace(/\/$/, '') + '/';
-      const playerUrl = `${baseUrl}?room=${roomKey}`;
+      let baseUrl = window.location.href.split('?')[0];
+      baseUrl = baseUrl.replace('/admin.html', '/index.html').replace('/admin', '/');
+      if (!baseUrl.endsWith('/') && !baseUrl.endsWith('.html')) baseUrl += '/';
+      const playerUrl = `${baseUrl}?room=${roomKey}&v=${Date.now()}`;
       document.getElementById('playerGameLink').value = playerUrl;
     }
 
