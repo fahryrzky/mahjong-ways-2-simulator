@@ -488,6 +488,9 @@
         setConnectionStatus(true);
         addLog("HP Ayah berhasil terhubung ke server!", "win");
 
+        // Kirim preset aktif saat ini ke HP ayah langsung begitu terhubung
+        conn.send({ type: 'SYNC_PRESET', preset: currentPreset });
+
         conn.on('data', (data) => {
           handlePlayerData(data);
         });
@@ -657,6 +660,16 @@
       else if (mode === 'zonk') document.getElementById('pZonk').classList.add('active');
       else if (mode === 'ldw') document.getElementById('pLdw').classList.add('active');
       else if (mode === 'real_slot') document.getElementById('pReal').classList.add('active');
+
+      // Sinkronisasikan preset ke pemain secara langsung
+      if (connectedPlayer && connectedPlayer.open) {
+        connectedPlayer.send({
+          type: 'SYNC_PRESET',
+          preset: mode
+        });
+      }
+
+      addLog(`Preset diubah ke: [${mode.toUpperCase()}]`, mode === 'zonk' ? 'zonk' : 'win');
     }
 
     function updateEduSheet(outcome) {

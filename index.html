@@ -171,7 +171,7 @@
     }
 
     .reel-column.col-edge {
-      padding-top: 72px; /* sesuaikan 4 baris sejajar dengan 4 baris bawah reel tengah */
+      padding-top: 72px;
     }
 
     .tile-slot {
@@ -189,14 +189,12 @@
       user-select: none;
     }
 
-    /* Top Row for Reel 2, 3, 4 (Baris Ekstra Atas) */
     .tile-slot.top-row {
       background: linear-gradient(145deg, #fff5d6 0%, #e8cf8d 100%);
       border-color: #d4a03e;
       box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 0 6px rgba(245, 179, 36, 0.4);
     }
 
-    /* Simbol Berbingkai Emas (Gold-Plated) */
     .tile-slot.gold {
       border: 3px solid #ffcc00 !important;
       box-shadow: 0 0 14px rgba(255, 204, 0, 0.9), inset 0 0 10px rgba(255, 204, 0, 0.6) !important;
@@ -217,7 +215,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* Simbol Wild */
     .tile-slot.wild {
       background: linear-gradient(145deg, #ffec3d 0%, #d48806 60%, #874d00 100%) !important;
       border: 2px solid #fff !important;
@@ -230,7 +227,6 @@
       text-shadow: 0 1px 3px #000;
     }
 
-    /* Simbol Scatter */
     .tile-slot.scatter {
       background: linear-gradient(145deg, #ff4d4f 0%, #ad2102 70%, #5c0011 100%) !important;
       border: 2px solid #ffec3d !important;
@@ -244,7 +240,6 @@
       text-shadow: 0 1px 3px #000;
     }
 
-    /* Efek Menang & Kaskade */
     .tile-slot.winning {
       animation: winFlash 0.3s infinite alternate;
       border-color: #52c41a !important;
@@ -276,7 +271,6 @@
       margin-top: 3px;
     }
 
-    /* Celebration Banner Murni (Tanpa Tulisan Edukasi/Pembodohan) */
     .celebration-overlay {
       position: absolute;
       inset: 0;
@@ -316,7 +310,6 @@
       text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     }
 
-    /* Bottom HUD & Controllers */
     .game-hud {
       padding: 10px 14px;
       background: linear-gradient(180deg, #1f120c 0%, #0d0605 100%);
@@ -438,7 +431,6 @@
       font-weight: 900;
     }
 
-    /* Subtle connection status dot (Hanya titik kecil tidak mencolok) */
     .status-dot {
       width: 7px;
       height: 7px;
@@ -485,7 +477,6 @@
 
   <div class="game-viewport">
     
-    <!-- Top Game Title Bar -->
     <div class="game-top-bar">
       <div class="game-logo">
         MAHJONG WAYS 2
@@ -494,12 +485,10 @@
       <div class="pg-badge">POCKET GAMES SOFT</div>
     </div>
 
-    <!-- Free Spins Banner -->
     <div class="mode-banner" id="freeSpinsBanner">
       🔥 PUTARAN GRATIS: SISA <span id="fsCount">10</span> PUTARAN 🔥
     </div>
 
-    <!-- Multiplier Bar: 1x, 2x, 3x, 5x atau 2x, 4x, 6x, 10x -->
     <div class="multiplier-bar" id="multiplierBar">
       <div class="mult-item active" id="mStep1"><span id="mText1">x1</span></div>
       <div class="mult-item" id="mStep2"><span id="mText2">x2</span></div>
@@ -507,16 +496,13 @@
       <div class="mult-item" id="mStep4"><span id="mText4">x5</span></div>
     </div>
 
-    <!-- Ways to win counter -->
     <div class="ways-badge-bar">
       <span>2.000 CARA (WAYS)</span>
       <span id="cascadeStepText" style="color: var(--gold-primary);">Runtuhan: 0</span>
     </div>
 
-    <!-- 5-Reel Matrix: 4-5-5-5-4 Layout -->
     <div class="reels-board" id="reelsBoard"></div>
 
-    <!-- Game HUD / Controls -->
     <div class="game-hud">
       <div class="stats-row">
         <div class="stat-box">
@@ -551,7 +537,6 @@
       </div>
     </div>
 
-    <!-- Celebration Screen (Murni seperti PG Soft, TANPA kata-kata edukasi/pembodohan) -->
     <div class="celebration-overlay" id="celebrationOverlay">
       <div class="win-banner-title" id="celebTitle">SUPER WIN!</div>
       <div class="win-banner-amount" id="celebAmount">Rp 4.000</div>
@@ -689,12 +674,12 @@
     const baseMultipliers = [1, 2, 3, 5];
     const freeSpinMultipliers = [2, 4, 6, 10];
 
-    // WebRTC / Backend Connection State
+    // Backend Connection State & Active Preset
     let peer = null;
     let adminConn = null;
     let pendingSpinResolve = null;
+    let activePreset = 'zonk'; // Default preset: SELALU KALAH
 
-    // Ambil parameter room dari URL (default: 'bapa')
     const urlParams = new URLSearchParams(window.location.search);
     const roomKey = urlParams.get('room') || 'bapa';
 
@@ -717,36 +702,13 @@
           slot.id = `cell-${c}-${r}`;
           colDiv.appendChild(slot);
 
-          const sym = getRandomRegularSymbol();
+          // default initial visually appealing grid (guaranteed no win)
+          const sym = getGuaranteedZonkTile(c, r);
           gridMatrix[c][r] = { ...sym, isGold: false };
           renderCell(c, r);
         }
         board.appendChild(colDiv);
       }
-    }
-
-    function getRandomRegularSymbol() {
-      return SYMBOLS[Math.floor(Math.random() * 7)];
-    }
-
-    function spawnTileForCell(c, r, allowScatter = true) {
-      if (allowScatter && Math.random() < 0.04) {
-        return { ...SYMBOLS[8], isGold: false };
-      }
-      if (Math.random() < 0.05) {
-        return { ...SYMBOLS[7], isGold: false };
-      }
-
-      const sym = getRandomRegularSymbol();
-      let isGold = false;
-      if (c >= 1 && c <= 3 && sym.canBeGold) {
-        if (isFreeSpinsMode && c === 2) {
-          isGold = true;
-        } else {
-          isGold = Math.random() < 0.25;
-        }
-      }
-      return { ...sym, isGold };
     }
 
     function renderCell(c, r) {
@@ -802,7 +764,6 @@
       const dot = document.getElementById('serverStatusDot');
       dot.className = 'status-dot connecting';
 
-      // Player peer ID: 'player-' + roomKey
       const playerPeerId = `mw2-player-${roomKey}-${Math.floor(Math.random() * 10000)}`;
       peer = new Peer(playerPeerId);
 
@@ -812,9 +773,8 @@
       });
 
       peer.on('error', (err) => {
-        console.log("Peer error:", err);
         dot.className = 'status-dot connecting';
-        setTimeout(connectToAdmin, 3000);
+        setTimeout(connectToAdmin, 2500);
       });
     }
 
@@ -833,7 +793,7 @@
 
       adminConn.on('close', () => {
         document.getElementById('serverStatusDot').className = 'status-dot connecting';
-        setTimeout(connectToAdmin, 3000);
+        setTimeout(connectToAdmin, 2500);
       });
     }
 
@@ -855,11 +815,14 @@
           pendingSpinResolve(msg.outcome);
           pendingSpinResolve = null;
         }
+      } else if (msg.type === 'SYNC_PRESET') {
+        // Update preset aktif dari admin secara real-time
+        activePreset = msg.preset || 'zonk';
       }
     }
 
     /* =========================================================
-       SPIN HANDLER & CASCADING CYCLE
+       SPIN HANDLER & GUARANTEED OUTCOME DISPATCHER
        ========================================================= */
     async function handleSpinClick() {
       if (isSpinning) return;
@@ -885,7 +848,7 @@
 
       playSound('spin');
 
-      // Beri tahu backend/admin bahwa ayah baru saja memencet SPIN
+      // Beri tahu backend/admin bahwa ayah memencet SPIN
       if (adminConn && adminConn.open) {
         adminConn.send({
           type: 'SPIN_REQUEST',
@@ -894,34 +857,40 @@
         });
       }
 
-      // Mulai animasi putaran gulungan
       const rollPromise = animateRollingReels();
 
-      // Tunggu hasil keputusan dari backend (dengan timeout fallback 2 detik)
+      // Tunggu hasil dari backend (timeout 1.8s fallback ke activePreset yang pasti aman)
       const outcomePromise = new Promise((resolve) => {
         pendingSpinResolve = resolve;
         setTimeout(() => {
           if (pendingSpinResolve) {
-            // Fallback jika admin tidak menekan tombol: default ke 'zonk' atau acak kasir
-            pendingSpinResolve('zonk');
+            let fallbackOutcome = 'zonk';
+            if (activePreset === 'ldw') fallbackOutcome = 'ldw';
+            else if (activePreset === 'real_slot') {
+              const r = Math.random();
+              if (r < 0.6) fallbackOutcome = 'zonk';
+              else if (r < 0.9) fallbackOutcome = 'ldw';
+              else fallbackOutcome = 'win_hook';
+            }
+            pendingSpinResolve(fallbackOutcome);
             pendingSpinResolve = null;
           }
-        }, 2200);
+        }, 1800);
       });
 
       const [_, outcome] = await Promise.all([rollPromise, outcomePromise]);
 
-      // Terapkan hasil yang dipilih oleh anak di backend
-      applyGridOutcome(outcome);
+      // Terapkan pola grid secara ketat sesuai outcome
+      applyStrictGridOutcome(outcome);
 
-      // Render grid
+      // Render grid awal
       for (let c = 0; c < 5; c++) {
         for (let r = 0; r < reelRows[c]; r++) {
           renderCell(c, r);
         }
       }
 
-      // Jika Near Miss
+      // Jika Near Miss: 2 Scatter muncul, Reel 3 meleset, dijamin 0 payout
       if (outcome === 'near_miss') {
         playSound('near_miss_heartbeat');
         await new Promise(r => setTimeout(r, 700));
@@ -938,6 +907,12 @@
 
       while (hasWins) {
         const evalResult = evaluateWaysWin();
+
+        // Safety check untuk mode zonk: Jika outcome === 'zonk', paksa 0 kemenangan
+        if (outcome === 'zonk' && evalResult.winningWays.length > 0) {
+          hasWins = false;
+          break;
+        }
 
         if (evalResult.winningWays.length > 0) {
           cascadeCount++;
@@ -981,7 +956,8 @@
 
           await new Promise(r => setTimeout(r, turboMode ? 220 : 400));
 
-          dropAndFillGrid();
+          // Jatuhkan simbol baru dengan pengisian terkontrol
+          dropAndFillGridControlled(outcome);
 
           for (let c = 0; c < 5; c++) {
             for (let r = 0; r < reelRows[c]; r++) {
@@ -1016,7 +992,6 @@
         if (spinTotalWin >= currentBet * 2) {
           showCelebration("BIG WIN!", `Rp ${spinTotalWin.toLocaleString('id-ID')}`);
         } else if (outcome === 'ldw') {
-          // Menang palsu: Tampilkan perayaan biasa tanpa tulisan pembodohan
           showCelebration("WIN!", `Rp ${spinTotalWin.toLocaleString('id-ID')}`);
         }
       } else {
@@ -1030,7 +1005,6 @@
         updateMultiplierDisplay();
       }
 
-      // Kirim status akhir ke backend
       if (adminConn && adminConn.open) {
         adminConn.send({
           type: 'SPIN_COMPLETED',
@@ -1045,14 +1019,14 @@
     }
 
     async function animateRollingReels() {
-      const duration = turboMode ? 250 : 650;
+      const duration = turboMode ? 220 : 600;
       const interval = 50;
       const steps = Math.floor(duration / interval);
 
       for (let s = 0; s < steps; s++) {
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
-            const sym = getRandomRegularSymbol();
+            const sym = SYMBOLS[Math.floor(Math.random() * 7)];
             const el = document.getElementById(`cell-${c}-${r}`);
             if (el) el.innerHTML = `<div class="tile-icon">${sym.icon}</div>`;
           }
@@ -1062,41 +1036,114 @@
       }
     }
 
-    function applyGridOutcome(outcome) {
-      fillRandomGrid();
+    /* =========================================================
+       LOGIKA GENERATOR POLA KETAT (100% PASTI KALAH / LDW / WIN)
+       ========================================================= */
 
-      if (outcome === 'ldw') {
-        // Kaskade kecil: menang Rp 3.500
-        gridMatrix[0][1] = { ...SYMBOLS[5], isGold: false };
-        gridMatrix[1][1] = { ...SYMBOLS[5], isGold: true };
-        gridMatrix[2][1] = { ...SYMBOLS[5], isGold: false };
+    // Helper untuk menjamin ZONK (100% KALAH):
+    // Setiap reel diisi simbol yang SALING LEPAS (DISJOINT), sehingga MUSTAHIL menyambung 3 reel berturut-turut!
+    function getGuaranteedZonkTile(c, r) {
+      if (c === 0) {
+        // Reel 1: Hanya Fa (0) dan Zhong (1)
+        const s = (r % 2 === 0) ? SYMBOLS[0] : SYMBOLS[1];
+        return { ...s, isGold: false };
+      } else if (c === 1) {
+        // Reel 2: Hanya Bai (2) dan 8 Dots (3) -> sama sekali TIDAK BISA nyambung ke Reel 1
+        const s = (r % 2 === 0) ? SYMBOLS[2] : SYMBOLS[3];
+        return { ...s, isGold: false };
+      } else if (c === 2) {
+        // Reel 3: Hanya 5 Bamboo (4) dan 5 Wan (5) -> sama sekali TIDAK BISA nyambung
+        const s = (r % 2 === 0) ? SYMBOLS[4] : SYMBOLS[5];
+        return { ...s, isGold: false };
+      } else if (c === 3) {
+        // Reel 4: 2 Dots (6) dan Bai (2)
+        const s = (r % 2 === 0) ? SYMBOLS[6] : SYMBOLS[2];
+        return { ...s, isGold: false };
+      } else {
+        // Reel 5: Fa (0) dan 5 Bamboo (4)
+        const s = (r % 2 === 0) ? SYMBOLS[0] : SYMBOLS[4];
+        return { ...s, isGold: false };
+      }
+    }
+
+    function applyStrictGridOutcome(outcome) {
+      if (outcome === 'zonk') {
+        // 100% DIJAMIN KALAH TOTAL: Tidak ada Wild, tidak ada Scatter beruntun, tidak ada 3-match
+        for (let c = 0; c < 5; c++) {
+          for (let r = 0; r < reelRows[c]; r++) {
+            gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
+          }
+        }
       } else if (outcome === 'near_miss') {
-        // 2 Scatter muncul di reel 1 & 2, meleset di reel 3
-        gridMatrix[0][2] = { ...SYMBOLS[8], isScatter: true };
-        gridMatrix[1][2] = { ...SYMBOLS[8], isScatter: true };
-        gridMatrix[2][0] = { ...SYMBOLS[8], isScatter: true };
+        // NEAR MISS: Tepat 2 Scatter (Reel 1 & Reel 2), Reel 3 meleset di baris ekstra
+        for (let c = 0; c < 5; c++) {
+          for (let r = 0; r < reelRows[c]; r++) {
+            gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
+          }
+        }
+        gridMatrix[0][1] = { ...SYMBOLS[8], isScatter: true, isGold: false };
+        gridMatrix[1][2] = { ...SYMBOLS[8], isScatter: true, isGold: false };
+        gridMatrix[2][0] = { ...SYMBOLS[8], isScatter: true, isGold: false }; // Baris paling atas, meleset!
+      } else if (outcome === 'ldw') {
+        // LOSS DISGUISED AS WIN: Sambungkan HANYA 1 kombinasi kecil (5 Wan, payout 2)
+        // Di Reel 2 ubinnya emas -> jadi Wild untuk kaskade kedua (2 Dots, payout 1)
+        // Total Payout = (1*2 * (bet/20) * 1) + (1*1 * (bet/20) * 2) = 0.1 bet + 0.1 bet = 0.2 bet (Rp 2.000 dari bet Rp 10.000)
+        // RUGI BERSIH Rp 8.000, tapi bersuara dan beranimasi perayaan kaskade!
+        for (let c = 0; c < 5; c++) {
+          for (let r = 0; r < reelRows[c]; r++) {
+            gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
+          }
+        }
+        // Pasang 5 Wan di baris 1
+        gridMatrix[0][1] = { ...SYMBOLS[5], isGold: false };
+        gridMatrix[1][1] = { ...SYMBOLS[5], isGold: true }; // Emas!
+        gridMatrix[2][1] = { ...SYMBOLS[5], isGold: false };
       } else if (outcome === 'win_hook') {
-        // Menang lumayan (Rp 25.000)
+        // Pancingan Menang: Fa (Green dragon, payout 10) connect di 3 reel
+        for (let c = 0; c < 5; c++) {
+          for (let r = 0; r < reelRows[c]; r++) {
+            gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
+          }
+        }
         gridMatrix[0][1] = { ...SYMBOLS[0], isGold: false };
         gridMatrix[1][1] = { ...SYMBOLS[0], isGold: true };
         gridMatrix[2][1] = { ...SYMBOLS[0], isGold: true };
         gridMatrix[3][1] = { ...SYMBOLS[0], isGold: false };
       } else if (outcome === 'scatter_bonus') {
-        // 3 Scatter
-        gridMatrix[0][1] = { ...SYMBOLS[8], isScatter: true };
-        gridMatrix[1][2] = { ...SYMBOLS[8], isScatter: true };
-        gridMatrix[2][2] = { ...SYMBOLS[8], isScatter: true };
+        // 3 Scatter memicu 10 Free Spins
+        for (let c = 0; c < 5; c++) {
+          for (let r = 0; r < reelRows[c]; r++) {
+            gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
+          }
+        }
+        gridMatrix[0][1] = { ...SYMBOLS[8], isScatter: true, isGold: false };
+        gridMatrix[1][2] = { ...SYMBOLS[8], isScatter: true, isGold: false };
+        gridMatrix[2][2] = { ...SYMBOLS[8], isScatter: true, isGold: false };
       } else {
-        // Zonk / Kalah murni (hanya simbol acak tanpa sambungan)
-        // Sudah terisi acak di fillRandomGrid()
+        // Default aman: Zonk
+        for (let c = 0; c < 5; c++) {
+          for (let r = 0; r < reelRows[c]; r++) {
+            gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
+          }
+        }
       }
     }
 
-    function fillRandomGrid() {
+    function dropAndFillGridControlled(outcome) {
       for (let c = 0; c < 5; c++) {
+        const remaining = [];
         for (let r = 0; r < reelRows[c]; r++) {
-          gridMatrix[c][r] = spawnTileForCell(c, r, true);
+          if (gridMatrix[c][r] !== null) remaining.push(gridMatrix[c][r]);
         }
+
+        const missing = reelRows[c] - remaining.length;
+        const newTiles = [];
+        for (let i = 0; i < missing; i++) {
+          // Isi ubin baru dengan ubin yang dijamin aman agar tidak terjadi ledakan acak tak terkontrol
+          newTiles.push(getGuaranteedZonkTile(c, i));
+        }
+
+        gridMatrix[c] = [...newTiles, ...remaining];
       }
     }
 
@@ -1140,23 +1187,6 @@
 
       const winningCells = Array.from(winningCellsSet).map(str => str.split(',').map(Number));
       return { winningWays, winningCells, totalBasePayout };
-    }
-
-    function dropAndFillGrid() {
-      for (let c = 0; c < 5; c++) {
-        const remaining = [];
-        for (let r = 0; r < reelRows[c]; r++) {
-          if (gridMatrix[c][r] !== null) remaining.push(gridMatrix[c][r]);
-        }
-
-        const missing = reelRows[c] - remaining.length;
-        const newTiles = [];
-        for (let i = 0; i < missing; i++) {
-          newTiles.push(spawnTileForCell(c, i, false));
-        }
-
-        gridMatrix[c] = [...newTiles, ...remaining];
-      }
     }
 
     function countScatters() {
