@@ -126,6 +126,104 @@
       font-size: 12px;
     }
 
+    .btn-open-game {
+      background: linear-gradient(180deg, #52c41a 0%, #237804 100%);
+      color: #fff;
+      border: 1px solid #73d13d;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-open-game:hover {
+      filter: brightness(1.15);
+    }
+
+    /* Remote Control Card */
+    .remote-ctrl-card {
+      background: linear-gradient(135deg, #182236 0%, #121826 100%);
+      border: 1.5px solid #2d3b5b;
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    }
+
+    .remote-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: #0b0f19;
+      border: 1px solid #28354f;
+    }
+
+    .remote-btn {
+      background: #1f273b;
+      border: 1px solid #3c4b6e;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .remote-btn:hover {
+      background: #2b3652;
+      border-color: var(--gold);
+      transform: translateY(-1px);
+    }
+
+    .remote-btn.stop-btn {
+      background: #381216;
+      border-color: #ff4d4f;
+      color: #ffa39e;
+    }
+
+    .remote-btn.stop-btn:hover {
+      background: #5c181f;
+      color: #fff;
+    }
+
+    .remote-btn.action-spin {
+      background: linear-gradient(180deg, #2b4a1b 0%, #1a330e 100%);
+      border-color: #52c41a;
+      color: #b7eb8f;
+    }
+
+    .remote-btn.action-spin:hover {
+      background: #237804;
+      color: #fff;
+    }
+
+    .decision-btn.locked-choice {
+      border: 2px solid var(--gold) !important;
+      background: #332610 !important;
+      box-shadow: 0 0 14px rgba(245, 179, 36, 0.5) !important;
+    }
+
+    .decision-btn.locked-choice strong::after {
+      content: " 🔒 TERKUNCI";
+      font-size: 9px;
+      background: var(--gold);
+      color: #000;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-left: auto;
+    }
+
     /* Telemetry Grid */
     .telemetry-row {
       display: grid;
@@ -355,7 +453,10 @@
         📲 Link Game untuk Ayah (Buka di HP Ayah):
       </div>
       <input type="text" class="link-input" id="playerGameLink" readonly>
-      <button class="btn-copy" onclick="copyPlayerLink()">Salin Link</button>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn-copy" onclick="copyPlayerLink()">Salin Link</button>
+        <button class="btn-open-game" onclick="openPlayerGameTab()">🎮 Buka Game (Tab Baru)</button>
+      </div>
     </div>
 
     <!-- Live Telemetry Monitor -->
@@ -383,47 +484,71 @@
       </div>
     </div>
 
+    <!-- KENDALI REMOTE HP AYAH (PENGATUR REMOTE & AUTO SPIN) -->
+    <div class="remote-ctrl-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div style="font-size: 13.5px; font-weight: 800; color: #ffe58f; display: flex; align-items: center; gap: 6px;">
+          🎮 PENGATUR REMOTE HP AYAH (KENDALI LANGSUNG DARI JAUH)
+        </div>
+        <div id="remoteAutoStatusPill" class="remote-status-pill">
+          Auto Spin HP: <span id="remoteAutoStatusText" style="color: #8c93a3;">NONAKTIF</span>
+        </div>
+      </div>
+      <div style="font-size: 11.5px; color: #94a3b8;">
+        Mulai atau hentikan Auto Spin di HP Ayah dari layar ini, atau picu putaran jarak jauh:
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
+        <button class="remote-btn" onclick="remoteStartAutoSpin(10)">🔄 Auto 10x</button>
+        <button class="remote-btn" onclick="remoteStartAutoSpin(30)">🔄 Auto 30x</button>
+        <button class="remote-btn" onclick="remoteStartAutoSpin(50)">🔄 Auto 50x</button>
+        <button class="remote-btn" style="border-color: #ffec3d; color: #ffec3d;" onclick="remoteStartAutoSpin(-1)">🔄 Auto ∞</button>
+        <button class="remote-btn stop-btn" id="btnRemoteStopAuto" onclick="remoteStopAutoSpin()">🛑 Stop Auto Spin</button>
+        <button class="remote-btn action-spin" onclick="remoteTriggerSpin()">🀄 Putar 1x di HP Ayah</button>
+        <button class="remote-btn" id="btnRemoteTurbo" onclick="remoteToggleTurbo()">⚡ Toggle Turbo 2x</button>
+      </div>
+    </div>
+
     <!-- ACTION TRIGGER BOX: KEPUTUSAN SAAT AYAH MENANG/KALAH -->
     <div class="action-box" id="actionBox">
       <div class="action-header">
         <div class="action-title">
-          <span id="actionIcon">⏳</span>
-          <span id="actionStatusText">Menunggu Ayah Menekan Tombol Putar...</span>
+          <span id="actionIcon">🎯</span>
+          <span id="actionStatusText">Pilih Hasil Sekarang (Kapan Saja) atau Tunggu Ayah Putar:</span>
         </div>
         <span class="countdown-tag" id="countdownTag">Sisa Waktu: 3s</span>
       </div>
 
-      <p style="font-size: 12px; color: var(--text-muted);">
-        Pilih salah satu tombol di bawah untuk menentukan hasil putaran di layar HP Ayah:
+      <p style="font-size: 12px; color: var(--text-muted);" id="actionSubText">
+        💡 <b>Bisa Dipencet Kapan Saja:</b> Klik salah satu tombol di bawah untuk mengunci hasil putaran Ayah (bahkan sebelum Ayah menekan tombol putar):
       </p>
 
       <div class="decision-grid">
-        <button class="decision-btn" onclick="sendOutcomeDecision('zonk')">
+        <button class="decision-btn" id="dBtnZonk" onclick="sendOutcomeDecision('zonk')">
           <strong style="color: var(--accent);">🛑 KALAH TOTAL (ZONK)</strong>
           <span>Ayah zonk, uang disedot tanpa ada simbol yang pecah.</span>
         </button>
 
-        <button class="decision-btn" onclick="sendOutcomeDecision('ldw')">
+        <button class="decision-btn" id="dBtnLdw" onclick="sendOutcomeDecision('ldw')">
           <strong style="color: var(--gold);">🎭 MENANG PALSU (LDW)</strong>
           <span>Pecah runtuh sampai pengali x3, menang sedikit dari bet (Rugi bersih tapi musik heboh!).</span>
         </button>
 
-        <button class="decision-btn" onclick="sendOutcomeDecision('near_miss')">
+        <button class="decision-btn" id="dBtnNearMiss" onclick="sendOutcomeDecision('near_miss')">
           <strong style="color: #b37feb;">😱 HAMPIR KENA (NEAR MISS)</strong>
           <span>2 Scatter muncul, Reel 3 melambat dengan debar jantung lalu meleset 1 baris.</span>
         </button>
 
-        <button class="decision-btn" onclick="sendOutcomeDecision('big_win')" style="border-color: #ffec3d; background: #262113;">
+        <button class="decision-btn" id="dBtnBigWin" onclick="sendOutcomeDecision('big_win')" style="border-color: #ffec3d; background: #262113;">
           <strong style="color: #ffec3d;">💰 BIG WIN (Pecah 4x Sampai x5)</strong>
           <span>Runtuh beruntun 4 tahap (x1 -> x2 -> x3 -> x5) dengan transformasi Wild emas!</span>
         </button>
 
-        <button class="decision-btn" onclick="sendOutcomeDecision('cascade_x10')" style="border-color: #ff4d4f; background: #2e1114;">
+        <button class="decision-btn" id="dBtnCascadeX10" onclick="sendOutcomeDecision('cascade_x10')" style="border-color: #ff4d4f; background: #2e1114;">
           <strong style="color: #ff4d4f;">🔥 PECAH SAMPAI x10 (SUPER CASCADE)</strong>
           <span>Runtuh 4x beruntun sampai puncak x10 menyala terang di layar Ayah!</span>
         </button>
 
-        <button class="decision-btn" onclick="sendOutcomeDecision('scatter_bonus')">
+        <button class="decision-btn" id="dBtnScatter" onclick="sendOutcomeDecision('scatter_bonus')">
           <strong style="color: #ffd666;">📜 SCATTER FREE SPINS</strong>
           <span>Dapat 3 Scatter (10 Free Spins pengali x10) untuk buktikan bonus tetap tidak menutup modal.</span>
         </button>
@@ -507,6 +632,7 @@
     let connectedPlayer = null;
     let currentPreset = 'manual'; // 'manual', 'zonk', 'ldw', 'big_win', 'real_slot'
     let oneShotOutcome = null;
+    let lockedNextOutcome = null;
     let countdownTimer = null;
     let spinCount = 0;
     const initialDeposit = 100000;
@@ -569,6 +695,50 @@
       alert("Link berhasil disalin! Kirimkan atau buka link ini di HP Ayah.");
     }
 
+    function openPlayerGameTab() {
+      const link = document.getElementById('playerGameLink').value;
+      if (link) window.open(link, '_blank');
+    }
+
+    /* Remote Controls untuk Auto Spin dan Game di HP Ayah */
+    function remoteStartAutoSpin(count) {
+      if (!connectedPlayer || !connectedPlayer.open) {
+        alert("HP Ayah belum terhubung! Pastikan game sudah dibuka di HP Ayah terlebih dahulu.");
+        return;
+      }
+      connectedPlayer.send({
+        type: 'REMOTE_START_AUTO_SPIN',
+        count: count
+      });
+      const cntStr = count === -1 ? 'Tak Terbatas' : `${count} Putaran`;
+      addLog(`Remote Auto Spin dimulai dari admin: [${cntStr}]`, 'win');
+    }
+
+    function remoteStopAutoSpin() {
+      if (connectedPlayer && connectedPlayer.open) {
+        connectedPlayer.send({ type: 'REMOTE_STOP_AUTO_SPIN' });
+        addLog('Remote Auto Spin dihentikan dari admin', 'zonk');
+      }
+    }
+
+    function remoteTriggerSpin() {
+      if (!connectedPlayer || !connectedPlayer.open) {
+        alert("HP Ayah belum terhubung! Pastikan game sudah dibuka di HP Ayah terlebih dahulu.");
+        return;
+      }
+      connectedPlayer.send({ type: 'REMOTE_TRIGGER_SPIN' });
+      addLog('Remote Putar 1x dipicu dari admin', 'win');
+    }
+
+    function remoteToggleTurbo() {
+      if (!connectedPlayer || !connectedPlayer.open) {
+        alert("HP Ayah belum terhubung! Pastikan game sudah dibuka di HP Ayah terlebih dahulu.");
+        return;
+      }
+      connectedPlayer.send({ type: 'REMOTE_TOGGLE_TURBO' });
+      addLog('Remote Turbo di-toggle dari admin', 'win');
+    }
+
     function setConnectionStatus(isOnline) {
       const dot = document.getElementById('connDot');
       const text = document.getElementById('connText');
@@ -628,23 +798,30 @@
       const icon = document.getElementById('actionIcon');
       const cd = document.getElementById('countdownTag');
 
-      box.classList.add('waiting-spin');
-      icon.innerText = '🚨';
-
       let details = `Bet: Rp ${lastPlayerBet.toLocaleString('id-ID')}`;
       if (lastPlayerIsTurbo) {
-        details += ` | ⚡ TURBO 2X: Potong Rp ${(lastPlayerBet * 2).toLocaleString('id-ID')}`;
+        details += ` | ⚡ TURBO 2X`;
       }
       if (lastPlayerIsAutoSpin) {
         const countStr = lastPlayerAutoSpinsLeft === -1 ? '∞' : lastPlayerAutoSpinsLeft;
         details += ` | 🔄 AUTO (${countStr})`;
       }
 
-      title.innerText = `AYAH MENEKAN PUTAR (${details})! TENTUKAN HASIL:`;
-      cd.style.display = 'inline-block';
-
-      // Suara notifikasi kecil di HP anak
       playAdminChime();
+
+      // Jika ada hasil yang sudah dikunci oleh anak sebelumnya, langsung kirim
+      if (lockedNextOutcome) {
+        const out = lockedNextOutcome;
+        lockedNextOutcome = null;
+        setTimeout(() => {
+          ['dBtnZonk', 'dBtnLdw', 'dBtnNearMiss', 'dBtnBigWin', 'dBtnCascadeX10', 'dBtnScatter'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.remove('locked-choice');
+          });
+        }, 600);
+        sendOutcomeDecision(out);
+        return;
+      }
 
       if (oneShotOutcome) {
         const out = oneShotOutcome;
@@ -665,6 +842,11 @@
         return;
       }
 
+      box.classList.add('waiting-spin');
+      icon.innerText = '🚨';
+      title.innerText = `AYAH MENEKAN PUTAR (${details})! PILIH HASIL:`;
+      cd.style.display = 'inline-block';
+
       // Hitung mundur 3 detik jika anak tidak klik, default ke zonk
       let timeLeft = 3;
       cd.innerText = `Sisa Waktu: ${timeLeft}s`;
@@ -681,10 +863,37 @@
 
     function sendOutcomeDecision(outcome) {
       clearInterval(countdownTimer);
+      lockedNextOutcome = outcome;
       document.getElementById('countdownTag').style.display = 'none';
       document.getElementById('actionBox').classList.remove('waiting-spin');
-      document.getElementById('actionIcon').innerText = '✅';
-      document.getElementById('actionStatusText').innerText = `Hasil Terkirim ke Layar Ayah: [${outcome.toUpperCase()}]`;
+      document.getElementById('actionIcon').innerText = '🔒';
+
+      const names = {
+        'zonk': 'KALAH TOTAL (ZONK)',
+        'ldw': 'MENANG PALSU (LDW)',
+        'near_miss': 'HAMPIR KENA (NEAR MISS)',
+        'big_win': 'BIG WIN (PECAH x5)',
+        'cascade_x10': 'SUPER CASCADE (PECAH x10)',
+        'scatter_bonus': 'SCATTER (10 FREE SPINS)'
+      };
+      const name = names[outcome] || outcome.toUpperCase();
+      document.getElementById('actionStatusText').innerText = `Terkunci untuk Putaran Depan: [${name}]`;
+
+      // Update visual highlight pada tombol keputusan
+      ['dBtnZonk', 'dBtnLdw', 'dBtnNearMiss', 'dBtnBigWin', 'dBtnCascadeX10', 'dBtnScatter'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.remove('locked-choice');
+      });
+      const targetMap = {
+        'zonk': 'dBtnZonk',
+        'ldw': 'dBtnLdw',
+        'near_miss': 'dBtnNearMiss',
+        'big_win': 'dBtnBigWin',
+        'cascade_x10': 'dBtnCascadeX10',
+        'scatter_bonus': 'dBtnScatter'
+      };
+      const activeBtn = document.getElementById(targetMap[outcome]);
+      if (activeBtn) activeBtn.classList.add('locked-choice');
 
       if (connectedPlayer && connectedPlayer.open) {
         connectedPlayer.send({
@@ -692,6 +901,10 @@
           outcome: outcome
         });
       }
+
+      updateEduSheet(outcome);
+      addLog(`Hasil putaran dikunci ke: [${name}]`, outcome === 'zonk' ? 'zonk' : 'win');
+    }
 
       updateEduSheet(outcome);
     }
@@ -741,6 +954,34 @@
           autoBadge.innerText = `🔄 AUTO SPIN AKTIF (Sisa: ${cnt})`;
         } else {
           autoBadge.style.display = 'none';
+        }
+      }
+
+      // Update Status Remote Auto Spin & Turbo di kartu Remote Control
+      const remoteAutoStatus = document.getElementById('remoteAutoStatusText');
+      const stopBtn = document.getElementById('btnRemoteStopAuto');
+      const turboBtn = document.getElementById('btnRemoteTurbo');
+      if (remoteAutoStatus) {
+        if (lastPlayerIsAutoSpin) {
+          const cnt = lastPlayerAutoSpinsLeft === -1 ? '∞' : lastPlayerAutoSpinsLeft;
+          remoteAutoStatus.innerText = `🟢 AKTIF (${cnt})`;
+          remoteAutoStatus.style.color = 'var(--green)';
+          if (stopBtn) stopBtn.style.boxShadow = '0 0 12px rgba(255, 77, 79, 0.8)';
+        } else {
+          remoteAutoStatus.innerText = '🔴 NONAKTIF';
+          remoteAutoStatus.style.color = '#8c93a3';
+          if (stopBtn) stopBtn.style.boxShadow = 'none';
+        }
+      }
+      if (turboBtn) {
+        if (lastPlayerIsTurbo) {
+          turboBtn.style.borderColor = 'var(--gold)';
+          turboBtn.style.color = 'var(--gold)';
+          turboBtn.innerText = '⚡ Turbo 2X: AKTIF';
+        } else {
+          turboBtn.style.borderColor = '#3c4b6e';
+          turboBtn.style.color = '#e2e8f0';
+          turboBtn.innerText = '⚡ Toggle Turbo 2x';
         }
       }
 

@@ -50,8 +50,9 @@
 
     /* GAME VIEWPORT (MURNI PERSIS PG SOFT MAHJONG WAYS 2) */
     .game-viewport {
-      width: 100%;
+      width: 100vw;
       max-width: 440px;
+      min-width: 0;
       height: 100%;
       height: 100dvh;
       max-height: 100dvh;
@@ -63,6 +64,7 @@
       box-shadow: 0 0 30px rgba(0,0,0,0.9);
       padding-top: env(safe-area-inset-top, 0px);
       padding-bottom: env(safe-area-inset-bottom, 0px);
+      box-sizing: border-box;
     }
 
     @media (min-width: 450px) and (min-height: 700px) {
@@ -75,6 +77,7 @@
         border: 2px solid #6b4020;
         height: 94vh;
         max-height: 860px;
+        width: 440px;
       }
     }
 
@@ -201,16 +204,19 @@
     /* 5-Reel Matrix: 4-5-5-5-4 (2,000 WAYS) */
     .reels-board {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
-      padding: 4px 6px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 3px;
+      padding: 3px 5px;
       background: rgba(14, 7, 7, 0.92);
-      margin: 2px 8px;
+      margin: 2px 6px;
       border-radius: 12px;
       border: 1px solid #5a381e;
       position: relative;
       flex: 1;
       min-height: 0; /* Penting agar flex item reels board bisa mengecil sesuai layar HP */
+      min-width: 0;
+      width: calc(100% - 12px);
+      box-sizing: border-box;
       box-shadow: inset 0 0 25px rgba(0,0,0,0.95);
       align-content: stretch;
     }
@@ -218,9 +224,11 @@
     .reel-column {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       position: relative;
       height: 100%;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .reel-column.col-edge {
@@ -238,6 +246,9 @@
     .tile-slot {
       flex: 1;
       min-height: 0;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
       max-height: 72px;
       background: linear-gradient(145deg, #fffdf8 0%, #e6d8ba 100%);
       border-radius: 7px;
@@ -329,10 +340,15 @@
     }
 
     .tile-slot .tile-name {
-      font-size: clamp(6.5px, 1.2vh, 8px);
+      font-size: clamp(6px, 1.8vw, 7.5px);
       font-weight: 800;
       color: #2b2b2b;
       margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 95%;
+      text-align: center;
     }
 
     .celebration-overlay {
@@ -413,15 +429,18 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
+      gap: 4px;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .bet-selector {
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
       background: #251a14;
-      padding: 3px 6px;
+      padding: 2px 4px;
       border-radius: 8px;
       border: 1px solid #4a2f1c;
       flex-shrink: 0;
@@ -433,43 +452,44 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-width: 36px;
+      min-width: 32px;
     }
 
     .bet-btn {
       background: #472b17;
       border: none;
       color: #fff;
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
+      width: 24px;
+      height: 25px;
+      border-radius: 5px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 15px;
+      font-size: 13.5px;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0;
     }
 
     .spin-btn {
       flex: 1;
       min-width: 0;
-      height: 46px;
+      height: 42px;
       background: linear-gradient(180deg, #52c41a 0%, #237804 100%);
       border: 2px solid #95de64;
-      border-radius: 23px;
+      border-radius: 21px;
       color: white;
-      font-size: clamp(14px, 3.8vw, 16px);
+      font-size: clamp(12px, 3.4vw, 15px);
       font-weight: 900;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(82, 196, 26, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
       transition: transform 0.1s;
-      padding: 0 8px;
+      padding: 0 4px;
       white-space: nowrap;
     }
 
@@ -494,19 +514,21 @@
 
     .quick-toggles {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       flex-shrink: 0;
     }
 
     .toggle-btn {
       background: #251a14;
       border: 1px solid #5a381e;
-      color: #aaa;
-      padding: 6px 7px;
-      border-radius: 8px;
-      font-size: 10.5px;
+      color: #bbb;
+      padding: 5px 6px;
+      border-radius: 7px;
+      font-size: clamp(9px, 2.4vw, 10.5px);
       cursor: pointer;
-      font-weight: 700;
+      font-weight: 800;
+      white-space: nowrap;
+    }
       white-space: nowrap;
     }
 
@@ -688,9 +710,9 @@
   <div class="game-viewport">
     
     <div class="game-top-bar">
-      <div class="game-logo">
+      <div class="game-logo" onclick="openAdminLink(event)">
         MAHJONG WAYS 2
-        <span class="status-dot" id="serverStatusDot" title="Server Status"></span>
+        <span class="status-dot" id="serverStatusDot" onclick="event.stopPropagation(); window.open('admin.html?room=' + roomKey, '_blank')" title="Status Server (Klik untuk buka Layar Admin)"></span>
       </div>
       <div class="top-bar-right">
         <span class="pg-badge">POCKET GAMES SOFT</span>
@@ -1185,6 +1207,12 @@
       }, turboMode ? 900 : 1800);
     }
 
+    function openAdminLink(e) {
+      if (e && e.detail === 3) {
+        window.open('admin.html?room=' + roomKey, '_blank');
+      }
+    }
+
     /* =========================================================
        KOMUNIKASI KE BACKEND / ADMIN (PEERJS)
        ========================================================= */
@@ -1241,18 +1269,34 @@
       }
     }
 
+    let queuedNextOutcome = null;
+
     function handleAdminMessage(msg) {
       if (msg.type === 'SET_OUTCOME') {
         if (pendingSpinResolve) {
           pendingSpinResolve(msg.outcome);
           pendingSpinResolve = null;
+          queuedNextOutcome = null;
+        } else {
+          // Kunci hasil putaran untuk putaran berikutnya
+          queuedNextOutcome = msg.outcome;
         }
+      } else if (msg.type === 'SET_ONE_SHOT') {
+        queuedNextOutcome = msg.outcome;
       } else if (msg.type === 'SYNC_PRESET') {
         // Update preset aktif dari admin secara real-time
         activePreset = msg.preset || 'zonk';
       } else if (msg.type === 'SET_SUPER_MULTIPLIER') {
         superMultiplierMode = !!msg.enabled;
         updateMultiplierDisplay();
+      } else if (msg.type === 'REMOTE_START_AUTO_SPIN') {
+        startAutoSpin(msg.count !== undefined ? msg.count : 10);
+      } else if (msg.type === 'REMOTE_STOP_AUTO_SPIN') {
+        stopAutoSpin();
+      } else if (msg.type === 'REMOTE_TRIGGER_SPIN') {
+        if (!isSpinning) handleSpinClick();
+      } else if (msg.type === 'REMOTE_TOGGLE_TURBO') {
+        toggleTurbo();
       }
     }
 
@@ -1300,24 +1344,34 @@
 
       const rollPromise = animateRollingReels();
 
-      // Tunggu hasil dari backend (timeout 1.8s fallback ke activePreset yang pasti aman)
-      const outcomePromise = new Promise((resolve) => {
-        pendingSpinResolve = resolve;
-        setTimeout(() => {
-          if (pendingSpinResolve) {
-            let fallbackOutcome = 'zonk';
-            if (activePreset === 'ldw') fallbackOutcome = 'ldw';
-            else if (activePreset === 'real_slot') {
-              const r = Math.random();
-              if (r < 0.6) fallbackOutcome = 'zonk';
-              else if (r < 0.9) fallbackOutcome = 'ldw';
-              else fallbackOutcome = 'win_hook';
+      // Cek apakah hasil sudah dikunci oleh admin sebelumnya (Instant Pre-decision)
+      let outcomePromise;
+      if (queuedNextOutcome) {
+        const locked = queuedNextOutcome;
+        queuedNextOutcome = null;
+        outcomePromise = Promise.resolve(locked);
+      } else {
+        // Tunggu hasil dari backend (timeout 1.8s fallback ke activePreset yang pasti aman)
+        outcomePromise = new Promise((resolve) => {
+          pendingSpinResolve = resolve;
+          setTimeout(() => {
+            if (pendingSpinResolve) {
+              let fallbackOutcome = 'zonk';
+              if (activePreset === 'ldw') fallbackOutcome = 'ldw';
+              else if (activePreset === 'big_win') fallbackOutcome = 'big_win';
+              else if (activePreset === 'cascade_x10') fallbackOutcome = 'cascade_x10';
+              else if (activePreset === 'real_slot') {
+                const r = Math.random();
+                if (r < 0.6) fallbackOutcome = 'zonk';
+                else if (r < 0.85) fallbackOutcome = 'ldw';
+                else fallbackOutcome = 'big_win';
+              }
+              pendingSpinResolve(fallbackOutcome);
+              pendingSpinResolve = null;
             }
-            pendingSpinResolve(fallbackOutcome);
-            pendingSpinResolve = null;
-          }
-        }, 1800);
-      });
+          }, 1800);
+        });
+      }
 
       const [_, outcome] = await Promise.all([rollPromise, outcomePromise]);
 
