@@ -339,7 +339,7 @@
     <header>
       <div>
         <span class="badge-admin">KONTROL BACKEND (ANAK)</span>
-        <span style="background: #237804; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">v2.1 (BIG WIN & ZONK AKTIF)</span>
+        <span style="background: #237804; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">v2.2 (AUTO SPIN, TURBO 2X & CARA MENANG DINAMIS)</span>
         <h2 style="font-size: 17px; margin-top: 4px;">Remote Pengendali Mahjong Ways 2</h2>
       </div>
 
@@ -368,6 +368,8 @@
       <div class="tele-card">
         <div class="tele-title">Taruhan (Bet) yang Dipasang</div>
         <div class="tele-number" id="admPlayerBet">Rp 10.000</div>
+        <div id="admTurboBadge" style="font-size: 10px; color: var(--gold); font-weight: bold; margin-top: 3px; display: none;">⚡ TURBO AKTIF (Biaya 2x)</div>
+        <div id="admAutoSpinBadge" style="font-size: 10px; color: #40a9ff; font-weight: bold; margin-top: 3px; display: none;">🔄 AUTO SPIN AKTIF</div>
       </div>
 
       <div class="tele-card danger">
@@ -403,7 +405,7 @@
 
         <button class="decision-btn" onclick="sendOutcomeDecision('ldw')">
           <strong style="color: var(--gold);">🎭 MENANG PALSU (LDW)</strong>
-          <span>Pecah runtuh sampai pengali x3, menang Rp 3.500 dari bet Rp 10.000 (Rugi Rp 6.500 tapi musik heboh!).</span>
+          <span>Pecah runtuh sampai pengali x3, menang sedikit dari bet (Rugi bersih tapi musik heboh!).</span>
         </button>
 
         <button class="decision-btn" onclick="sendOutcomeDecision('near_miss')">
@@ -412,8 +414,8 @@
         </button>
 
         <button class="decision-btn" onclick="sendOutcomeDecision('big_win')" style="border-color: #ffec3d; background: #262113;">
-          <strong style="color: #ffec3d;">💰 MENANG BESAR (BIG WIN)</strong>
-          <span>Kaskade 16-Ways Fa & Wild, menang Rp 300.000 - Rp 500.000 (Sensational Win!).</span>
+          <strong style="color: #ffec3d;">💰 MENANG BESAR (BIG WIN DINAMIS)</strong>
+          <span>Simbol acak (Fa/Zhong/Bai) & 8-48 Ways kaskade Wild, hasil dinamis dan tidak pernah sama!</span>
         </button>
 
         <button class="decision-btn" onclick="sendOutcomeDecision('scatter_bonus')">
@@ -455,6 +457,20 @@
       💡 <b>Panduan Bicara Saat Ini:</b> Ayah sedang melihat permainan Mahjong Ways 2 biasa. Di layarnya <b>TIDAK ADA</b> satupun tulisan edukasi atau cheat. Saat Ayah memencet tombol PUTAR di HP-nya, kotak merah di atas akan menyala berkedip. Anda tinggal memilih nasib putarannya (misal: <i>Menang Palsu</i> atau <i>Near Miss</i>) lalu perhatikan reaksinya!
     </div>
 
+    <!-- Kotak Edukasi Perhitungan Resmi PG Soft -->
+    <div style="background: #181c2b; border: 1px solid #2e3852; border-radius: 12px; padding: 14px 18px; font-size: 11.5px; color: #cbd5e1; line-height: 1.6;">
+      <div style="font-weight: 800; color: var(--gold); font-size: 13px; margin-bottom: 6px;">
+        📐 Rumus Resmi Perhitungan Kemenangan (PG Soft Mahjong Ways 2):
+      </div>
+      <div>
+        • <b>Taruhan Dasar:</b> 20 unit taruhan tetap. <i>Unit Taruhan = Total Taruhan ÷ 20</i> (Contoh: Bet Rp 10.000, 1 unit = Rp 500).<br>
+        • <b>Cara Menang (Ways):</b> Perkalian jumlah ubin yang sama di setiap reel berturut-turut dari kiri ke kanan (Reel 1 × Reel 2 × Reel 3...).<br>
+        • <b>Rumus Payout:</b> <code>Ways × Nilai Simbol × Unit Taruhan × Pengali Runtuhan</code>.<br>
+        • <b>Jebakan Turbo 2x:</b> Biaya putaran dinaikkan 2x lipat (Bet Rp 10k memotong Rp 20k), tapi pembayaran paytable tetap dihitung dari taruhan dasar, sehingga uang pemain habis 2x lebih cepat!<br>
+        • <b>Jebakan Auto Spin:</b> Putaran berjalan tanpa henti menghilangkan momen jeda refleksi pemain saat kalah.
+      </div>
+    </div>
+
     <!-- Live Activity Log -->
     <div class="log-card">
       <div style="font-size: 13px; font-weight: 800; color: #fff;">
@@ -480,6 +496,10 @@
     const initialDeposit = 100000;
     let lastPlayerBalance = 100000;
     let lastPlayerBet = 10000;
+    let lastPlayerIsTurbo = false;
+    let lastPlayerCost = 10000;
+    let lastPlayerIsAutoSpin = false;
+    let lastPlayerAutoSpinsLeft = 0;
 
     // Room ID dari URL (default: 'bapa')
     const urlParams = new URLSearchParams(window.location.search);
@@ -551,11 +571,19 @@
       if (msg.type === 'PLAYER_STATE') {
         lastPlayerBalance = msg.balance;
         lastPlayerBet = msg.bet;
+        lastPlayerCost = msg.cost || msg.bet;
+        lastPlayerIsTurbo = !!msg.isTurbo;
+        lastPlayerIsAutoSpin = !!msg.isAutoSpin;
+        lastPlayerAutoSpinsLeft = msg.autoSpinsLeft || 0;
         updateTelemetry();
       } else if (msg.type === 'SPIN_REQUEST') {
         spinCount++;
         lastPlayerBet = msg.bet;
         lastPlayerBalance = msg.balance;
+        lastPlayerCost = msg.cost || msg.bet;
+        lastPlayerIsTurbo = !!msg.isTurbo;
+        lastPlayerIsAutoSpin = !!msg.isAutoSpin;
+        lastPlayerAutoSpinsLeft = msg.autoSpinsLeft || 0;
         updateTelemetry();
 
         onSpinRequestedByPlayer();
@@ -586,7 +614,17 @@
 
       box.classList.add('waiting-spin');
       icon.innerText = '🚨';
-      title.innerText = `AYAH MENEKAN PUTAR (Bet: Rp ${lastPlayerBet.toLocaleString('id-ID')})! TENTUKAN HASIL:`;
+
+      let details = `Bet: Rp ${lastPlayerBet.toLocaleString('id-ID')}`;
+      if (lastPlayerIsTurbo) {
+        details += ` | ⚡ TURBO 2X: Potong Rp ${(lastPlayerBet * 2).toLocaleString('id-ID')}`;
+      }
+      if (lastPlayerIsAutoSpin) {
+        const countStr = lastPlayerAutoSpinsLeft === -1 ? '∞' : lastPlayerAutoSpinsLeft;
+        details += ` | 🔄 AUTO (${countStr})`;
+      }
+
+      title.innerText = `AYAH MENEKAN PUTAR (${details})! TENTUKAN HASIL:`;
       cd.style.display = 'inline-block';
 
       // Suara notifikasi kecil di HP anak
@@ -668,6 +706,27 @@
       document.getElementById('admPlayerBalance').innerText = `Rp ${lastPlayerBalance.toLocaleString('id-ID')}`;
       document.getElementById('admPlayerBet').innerText = `Rp ${lastPlayerBet.toLocaleString('id-ID')}`;
       document.getElementById('admSpinCount').innerText = `${spinCount}x`;
+
+      const turboBadge = document.getElementById('admTurboBadge');
+      if (turboBadge) {
+        if (lastPlayerIsTurbo) {
+          turboBadge.style.display = 'block';
+          turboBadge.innerText = `⚡ TURBO 2X (Disedot: Rp ${(lastPlayerBet * 2).toLocaleString('id-ID')})`;
+        } else {
+          turboBadge.style.display = 'none';
+        }
+      }
+
+      const autoBadge = document.getElementById('admAutoSpinBadge');
+      if (autoBadge) {
+        if (lastPlayerIsAutoSpin) {
+          autoBadge.style.display = 'block';
+          const cnt = lastPlayerAutoSpinsLeft === -1 ? '∞' : lastPlayerAutoSpinsLeft;
+          autoBadge.innerText = `🔄 AUTO SPIN AKTIF (Sisa: ${cnt})`;
+        } else {
+          autoBadge.style.display = 'none';
+        }
+      }
 
       const loss = initialDeposit - lastPlayerBalance;
       const lossEl = document.getElementById('admTotalLoss');

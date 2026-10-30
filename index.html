@@ -411,20 +411,28 @@
       color: #888;
     }
 
+    .spin-btn.auto-running {
+      background: linear-gradient(180deg, #ff4d4f 0%, #cf1322 100%) !important;
+      border-color: #ffa39e !important;
+      box-shadow: 0 4px 18px rgba(255, 77, 79, 0.6) !important;
+      animation: bannerPulse 0.8s infinite alternate;
+    }
+
     .quick-toggles {
       display: flex;
-      gap: 6px;
+      gap: 5px;
     }
 
     .toggle-btn {
       background: #251a14;
       border: 1px solid #5a381e;
       color: #aaa;
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: 8px;
       font-size: 11px;
       cursor: pointer;
       font-weight: 700;
+      white-space: nowrap;
     }
 
     .toggle-btn.active {
@@ -432,6 +440,113 @@
       color: #000;
       border-color: #ffe58f;
       font-weight: 900;
+    }
+
+    /* Ways Calculation Dynamic Toast */
+    .ways-toast {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      background: rgba(18, 10, 8, 0.95);
+      border: 1.5px solid var(--gold-primary);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 80;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.85), 0 0 12px rgba(255, 204, 0, 0.4);
+      white-space: nowrap;
+    }
+
+    .ways-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Modals for Bet Selector & Auto Spin */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #1c1410;
+      border: 2px solid #5a381e;
+      border-radius: 16px;
+      padding: 18px;
+      width: 90%;
+      max-width: 360px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.9);
+      text-align: center;
+      color: #fff;
+    }
+
+    .modal-header {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--gold-primary);
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .chips-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .chip-btn {
+      background: #2a1c14;
+      border: 1px solid #4a2f1c;
+      color: #fff;
+      padding: 9px 4px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chip-btn:hover {
+      background: #3d281a;
+      border-color: var(--gold-primary);
+    }
+
+    .chip-btn.active {
+      background: linear-gradient(180deg, #ffcc00, #b87b08);
+      color: #000;
+      border-color: #ffe58f;
+      font-weight: 900;
+    }
+
+    .modal-close-btn {
+      background: #332014;
+      border: 1px solid #664126;
+      color: #ccc;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     .status-dot {
@@ -492,6 +607,12 @@
       🔥 PUTARAN GRATIS: SISA <span id="fsCount">10</span> PUTARAN 🔥
     </div>
 
+    <!-- Floating Live Ways Calculation Toast -->
+    <div class="ways-toast" id="waysToast">
+      <span id="waysToastIcon">🀅</span>
+      <span id="waysToastText">Fa x5 | 24 Cara (Ways) | Rp 600.000</span>
+    </div>
+
     <div class="multiplier-bar" id="multiplierBar">
       <div class="mult-item active" id="mStep1"><span id="mText1">x1</span></div>
       <div class="mult-item" id="mStep2"><span id="mText2">x2</span></div>
@@ -512,9 +633,10 @@
           <span class="stat-label">Saldo</span>
           <span class="stat-val" id="playerBalanceDisplay">Rp 100.000</span>
         </div>
-        <div class="stat-box">
+        <div class="stat-box" onclick="openBetModal()" style="cursor: pointer;" title="Klik untuk pilih taruhan">
           <span class="stat-label">Taruhan</span>
           <span class="stat-val" id="currentBetDisplay">Rp 10.000</span>
+          <span id="turboCostDisplay" style="display: none; font-size: 9.5px; color: #ffcc00; font-weight: 800;">⚡ Biaya: Rp 20.000</span>
         </div>
         <div class="stat-box" style="text-align: right;">
           <span class="stat-label">Menang</span>
@@ -523,29 +645,60 @@
       </div>
 
       <div class="controls-row">
-        <div class="bet-selector">
-          <button class="bet-btn" onclick="adjustBet(-2000)">-</button>
-          <span style="font-size: 13px; font-weight: bold;" id="betValShort">10k</span>
-          <button class="bet-btn" onclick="adjustBet(2000)">+</button>
+        <div class="bet-selector" onclick="openBetModal()" title="Klik untuk pilih taruhan">
+          <button class="bet-btn" onclick="event.stopPropagation(); adjustBet(-1)">-</button>
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px;">
+            <span style="font-size: 13px; font-weight: bold;" id="betValShort">10k</span>
+            <span style="font-size: 8px; color: #ffcc00; font-weight: 800; display: none;" id="turboMultiplierBadge">⚡2X</span>
+          </div>
+          <button class="bet-btn" onclick="event.stopPropagation(); adjustBet(1)">+</button>
         </div>
 
-        <button class="spin-btn" id="spinButton" onclick="handleSpinClick()">
-          <span>PUTAR</span> 🀄
+        <button class="spin-btn" id="spinButton" onclick="handleSpinOrStopClick()">
+          <span id="spinButtonText">PUTAR</span> 🀄
         </button>
 
         <div class="quick-toggles">
-          <button class="toggle-btn" id="turboToggle" onclick="toggleTurbo()">TURBO</button>
+          <button class="toggle-btn" id="turboToggle" onclick="toggleTurbo()" title="Turbo Mode (Taruhan x2)">⚡ TURBO</button>
+          <button class="toggle-btn" id="autoToggle" onclick="openAutoSpinModal()" title="Auto Spin">🔄 AUTO</button>
           <button class="toggle-btn" id="soundToggle" onclick="toggleSound()">🔊 ON</button>
         </div>
       </div>
     </div>
 
+    <!-- Celebration Overlay -->
     <div class="celebration-overlay" id="celebrationOverlay">
       <div class="win-banner-title" id="celebTitle">SUPER WIN!</div>
       <div class="win-banner-amount" id="celebAmount">Rp 4.000</div>
       <button style="padding: 10px 28px; background: linear-gradient(180deg, #ffcc00, #b87b08); border: none; border-radius: 20px; color: #000; font-weight: 900; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(255,204,0,0.5);" onclick="closeCelebration()">
         LANJUT
       </button>
+    </div>
+
+    <!-- Quick Bet Modal -->
+    <div class="modal-overlay" id="betModal" onclick="closeBetModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">PILIH JUMLAH TARUHAN</div>
+        <div class="chips-grid" id="betChipsGrid"></div>
+        <button class="modal-close-btn" onclick="closeBetModal()">TUTUP</button>
+      </div>
+    </div>
+
+    <!-- Auto Spin Modal -->
+    <div class="modal-overlay" id="autoSpinModal" onclick="closeAutoSpinModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">PILIH PUTARAN OTOMATIS</div>
+        <p style="font-size: 11px; color: #aaa; margin-bottom: 12px;">Putaran akan berjalan otomatis hingga habis atau tombol STOP ditekan.</p>
+        <div class="chips-grid">
+          <button class="chip-btn" onclick="startAutoSpin(10)">10 Putaran</button>
+          <button class="chip-btn" onclick="startAutoSpin(30)">30 Putaran</button>
+          <button class="chip-btn" onclick="startAutoSpin(50)">50 Putaran</button>
+          <button class="chip-btn" onclick="startAutoSpin(80)">80 Putaran</button>
+          <button class="chip-btn" onclick="startAutoSpin(100)">100 Putaran</button>
+          <button class="chip-btn" style="border-color: #ffcc00; color: #ffec3d;" onclick="startAutoSpin(-1)">∞ Tak Terbatas</button>
+        </div>
+        <button class="modal-close-btn" onclick="closeAutoSpinModal()">BATAL</button>
+      </div>
     </div>
 
   </div>
@@ -749,15 +902,176 @@
 
     function adjustBet(delta) {
       if (isSpinning) return;
-      currentBet = Math.max(2000, Math.min(50000, currentBet + delta));
-      document.getElementById('currentBetDisplay').innerText = `Rp ${currentBet.toLocaleString('id-ID')}`;
-      document.getElementById('betValShort').innerText = `${currentBet / 1000}k`;
+      let idx = BET_LEVELS.indexOf(currentBet);
+      if (idx === -1) {
+        idx = BET_LEVELS.findIndex(b => b >= currentBet);
+        if (idx === -1) idx = 0;
+      }
+      idx = Math.max(0, Math.min(BET_LEVELS.length - 1, idx + delta));
+      currentBet = BET_LEVELS[idx];
+      updateBetDisplays();
       notifyAdminState();
+    }
+
+    const BET_LEVELS = [
+      2000, 4000, 6000, 10000, 15000, 20000, 30000, 50000,
+      75000, 100000, 150000, 200000, 300000, 500000, 750000,
+      1000000, 1500000, 2000000, 2500000, 5000000, 10000000
+    ];
+
+    function formatBetShort(val) {
+      if (val >= 1000000) {
+        const jt = (val / 1000000).toFixed(1).replace('.0', '');
+        return `${jt}Jt`;
+      }
+      return `${val / 1000}k`;
+    }
+
+    function updateBetDisplays() {
+      const betShort = formatBetShort(currentBet);
+      const betEl = document.getElementById('currentBetDisplay');
+      const shortEl = document.getElementById('betValShort');
+      const turboCostEl = document.getElementById('turboCostDisplay');
+      const turboBadgeEl = document.getElementById('turboMultiplierBadge');
+
+      if (betEl) betEl.innerText = `Rp ${currentBet.toLocaleString('id-ID')}`;
+      if (shortEl) shortEl.innerText = betShort;
+
+      const effectiveCost = getEffectiveSpinCost();
+      if (turboMode) {
+        if (turboCostEl) {
+          turboCostEl.style.display = 'block';
+          turboCostEl.innerText = `⚡ Biaya: Rp ${effectiveCost.toLocaleString('id-ID')} (Turbo 2x)`;
+        }
+        if (turboBadgeEl) turboBadgeEl.style.display = 'block';
+      } else {
+        if (turboCostEl) turboCostEl.style.display = 'none';
+        if (turboBadgeEl) turboBadgeEl.style.display = 'none';
+      }
+    }
+
+    function openBetModal() {
+      if (isSpinning) return;
+      const grid = document.getElementById('betChipsGrid');
+      grid.innerHTML = '';
+      BET_LEVELS.forEach(b => {
+        const btn = document.createElement('button');
+        btn.className = `chip-btn ${b === currentBet ? 'active' : ''}`;
+        btn.innerText = `Rp ${formatBetShort(b)}`;
+        btn.onclick = () => {
+          currentBet = b;
+          updateBetDisplays();
+          closeBetModal();
+          notifyAdminState();
+        };
+        grid.appendChild(btn);
+      });
+      document.getElementById('betModal').classList.add('show');
+    }
+
+    function closeBetModal(e) {
+      if (!e || e.target.id === 'betModal' || e.target.classList.contains('modal-close-btn')) {
+        document.getElementById('betModal').classList.remove('show');
+      }
+    }
+
+    function getEffectiveSpinCost() {
+      return turboMode ? currentBet * 2 : currentBet;
     }
 
     function toggleTurbo() {
       turboMode = !turboMode;
-      document.getElementById('turboToggle').classList.toggle('active', turboMode);
+      const btn = document.getElementById('turboToggle');
+      btn.classList.toggle('active', turboMode);
+      btn.innerText = turboMode ? '⚡ TURBO 2X' : 'TURBO';
+      updateBetDisplays();
+      notifyAdminState();
+    }
+
+    /* Auto Spin State & Handlers */
+    let isAutoSpinActive = false;
+    let autoSpinsLeft = 0; // -1 for infinite
+    let autoSpinTimeout = null;
+
+    function openAutoSpinModal() {
+      if (isSpinning) return;
+      if (isAutoSpinActive) {
+        stopAutoSpin();
+        return;
+      }
+      document.getElementById('autoSpinModal').classList.add('show');
+    }
+
+    function closeAutoSpinModal(e) {
+      if (!e || e.target.id === 'autoSpinModal' || e.target.classList.contains('modal-close-btn')) {
+        document.getElementById('autoSpinModal').classList.remove('show');
+      }
+    }
+
+    function startAutoSpin(count) {
+      closeAutoSpinModal();
+      isAutoSpinActive = true;
+      autoSpinsLeft = count;
+      updateAutoSpinUI();
+      notifyAdminState();
+
+      if (!isSpinning) {
+        handleSpinClick();
+      }
+    }
+
+    function stopAutoSpin() {
+      isAutoSpinActive = false;
+      autoSpinsLeft = 0;
+      if (autoSpinTimeout) {
+        clearTimeout(autoSpinTimeout);
+        autoSpinTimeout = null;
+      }
+      updateAutoSpinUI();
+      notifyAdminState();
+    }
+
+    function updateAutoSpinUI() {
+      const spinBtn = document.getElementById('spinButton');
+      const spinText = document.getElementById('spinButtonText');
+      const autoBtn = document.getElementById('autoToggle');
+
+      if (isAutoSpinActive) {
+        spinBtn.classList.add('auto-running');
+        autoBtn.classList.add('active');
+        const countTxt = autoSpinsLeft === -1 ? '∞' : autoSpinsLeft;
+        spinText.innerText = `STOP (${countTxt})`;
+      } else {
+        spinBtn.classList.remove('auto-running');
+        autoBtn.classList.remove('active');
+        spinText.innerText = 'PUTAR';
+      }
+    }
+
+    function handleSpinOrStopClick() {
+      if (isAutoSpinActive) {
+        stopAutoSpin();
+        return;
+      }
+      handleSpinClick();
+    }
+
+    /* Ways Calculation Dynamic Toast */
+    function showWaysToast(winningWays, mult) {
+      const toast = document.getElementById('waysToast');
+      const iconEl = document.getElementById('waysToastIcon');
+      const textEl = document.getElementById('waysToastText');
+      if (!toast || !winningWays || winningWays.length === 0) return;
+
+      const primary = winningWays[0];
+      const stepWin = primary.payout * (currentBet / 20) * mult;
+      iconEl.innerText = primary.icon || '🀅';
+      textEl.innerText = `${primary.name} x${primary.chain} (${primary.ways} Cara) = Rp ${stepWin.toLocaleString('id-ID')} (x${mult})`;
+
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, turboMode ? 900 : 1800);
     }
 
     /* =========================================================
@@ -806,6 +1120,10 @@
           type: 'PLAYER_STATE',
           balance: playerBalance,
           bet: currentBet,
+          cost: getEffectiveSpinCost(),
+          isTurbo: turboMode,
+          isAutoSpin: isAutoSpinActive,
+          autoSpinsLeft: autoSpinsLeft,
           isFreeSpins: isFreeSpinsMode,
           freeSpinsLeft: freeSpinsRemaining
         });
@@ -829,8 +1147,10 @@
        ========================================================= */
     async function handleSpinClick() {
       if (isSpinning) return;
-      if (playerBalance < currentBet) {
-        alert("Saldo tidak mencukupi untuk memasang taruhan.");
+      const spinCost = getEffectiveSpinCost();
+      if (playerBalance < spinCost) {
+        stopAutoSpin();
+        alert("Saldo tidak mencukupi untuk memasang taruhan!");
         return;
       }
 
@@ -842,7 +1162,7 @@
       document.getElementById('cascadeStepText').innerText = `Runtuhan: 0`;
 
       if (!isFreeSpinsMode) {
-        playerBalance -= currentBet;
+        playerBalance -= spinCost;
         updateBalanceUI(0);
       } else {
         freeSpinsRemaining--;
@@ -856,6 +1176,10 @@
         adminConn.send({
           type: 'SPIN_REQUEST',
           bet: currentBet,
+          cost: spinCost,
+          isTurbo: turboMode,
+          isAutoSpin: isAutoSpinActive,
+          autoSpinsLeft: autoSpinsLeft,
           balance: playerBalance
         });
       }
@@ -897,9 +1221,7 @@
       if (outcome === 'near_miss') {
         playSound('near_miss_heartbeat');
         await new Promise(r => setTimeout(r, 700));
-        isSpinning = false;
-        document.getElementById('spinButton').disabled = false;
-        notifyAdminState();
+        finishSpinCycle(0, outcome);
         return;
       }
 
@@ -929,12 +1251,15 @@
 
           playSound('cascade_win');
 
+          // Tampilkan Ways Toast dinamis (seperti di game PG Soft asli)
+          showWaysToast(evalResult.winningWays, mult);
+
           evalResult.winningCells.forEach(([c, r]) => {
             const el = document.getElementById(`cell-${c}-${r}`);
             if (el) el.classList.add('winning');
           });
 
-          await new Promise(r => setTimeout(r, turboMode ? 300 : 550));
+          await new Promise(r => setTimeout(r, turboMode ? 260 : 500));
 
           let transformedWilds = 0;
           evalResult.winningCells.forEach(([c, r]) => {
@@ -957,7 +1282,7 @@
 
           if (transformedWilds > 0) playSound('wild_transform');
 
-          await new Promise(r => setTimeout(r, turboMode ? 220 : 400));
+          await new Promise(r => setTimeout(r, turboMode ? 200 : 380));
 
           // Jatuhkan simbol baru dengan pengisian terkontrol
           dropAndFillGridControlled(outcome);
@@ -968,7 +1293,7 @@
             }
           }
 
-          await new Promise(r => setTimeout(r, turboMode ? 180 : 300));
+          await new Promise(r => setTimeout(r, turboMode ? 160 : 280));
         } else {
           hasWins = false;
         }
@@ -986,7 +1311,10 @@
         showCelebration("FREE SPINS!", `${freeSpinsRemaining} PUTARAN`);
       }
 
-      // Payout akhir
+      finishSpinCycle(spinTotalWin, outcome);
+    }
+
+    function finishSpinCycle(spinTotalWin, outcome) {
       if (spinTotalWin > 0) {
         playerBalance += spinTotalWin;
         updateBalanceUI(spinTotalWin);
@@ -1021,11 +1349,34 @@
 
       isSpinning = false;
       document.getElementById('spinButton').disabled = false;
+
+      // Handle Auto Spin berikutnya
+      if (isAutoSpinActive) {
+        if (autoSpinsLeft > 0) {
+          autoSpinsLeft--;
+        }
+        if (autoSpinsLeft === 0) {
+          stopAutoSpin();
+        } else {
+          updateAutoSpinUI();
+          const nextCost = getEffectiveSpinCost();
+          if (playerBalance < nextCost) {
+            stopAutoSpin();
+            alert("Saldo habis! Putaran otomatis dihentikan.");
+          } else {
+            autoSpinTimeout = setTimeout(() => {
+              if (isAutoSpinActive && !isSpinning) {
+                handleSpinClick();
+              }
+            }, turboMode ? 280 : 750);
+          }
+        }
+      }
     }
 
     async function animateRollingReels() {
-      const duration = turboMode ? 220 : 600;
-      const interval = 50;
+      const duration = turboMode ? 180 : 550;
+      const interval = 45;
       const steps = Math.floor(duration / interval);
 
       for (let s = 0; s < steps; s++) {
@@ -1042,45 +1393,56 @@
     }
 
     /* =========================================================
-       LOGIKA GENERATOR POLA KETAT (100% PASTI KALAH / LDW / WIN)
+       LOGIKA GENERATOR POLA KETAT & DINAMIS
        ========================================================= */
+    let currentBigWinPlan = null;
 
-    // Helper untuk menjamin ZONK (100% KALAH):
-    // Setiap reel diisi simbol yang SALING LEPAS (DISJOINT), sehingga MUSTAHIL menyambung 3 reel berturut-turut!
     function getGuaranteedZonkTile(c, r) {
       if (c === 0) {
-        // Reel 1: Hanya Fa (0) dan Zhong (1)
         const s = (r % 2 === 0) ? SYMBOLS[0] : SYMBOLS[1];
         return { ...s, isGold: false };
       } else if (c === 1) {
-        // Reel 2: Hanya Bai (2) dan 8 Dots (3) -> sama sekali TIDAK BISA nyambung ke Reel 1
         const s = (r % 2 === 0) ? SYMBOLS[2] : SYMBOLS[3];
         return { ...s, isGold: false };
       } else if (c === 2) {
-        // Reel 3: Hanya 5 Bamboo (4) dan 5 Wan (5) -> sama sekali TIDAK BISA nyambung
         const s = (r % 2 === 0) ? SYMBOLS[4] : SYMBOLS[5];
         return { ...s, isGold: false };
       } else if (c === 3) {
-        // Reel 4: 2 Dots (6) dan Bai (2)
         const s = (r % 2 === 0) ? SYMBOLS[6] : SYMBOLS[2];
         return { ...s, isGold: false };
       } else {
-        // Reel 5: Fa (0) dan 5 Bamboo (4)
         const s = (r % 2 === 0) ? SYMBOLS[0] : SYMBOLS[4];
         return { ...s, isGold: false };
       }
     }
 
+    function getSafeNonMatchingTile(c, r, forbiddenIds = []) {
+      const colPools = [
+        ['fa', 'zhong'],                // Col 0
+        ['bai', 'eight_dots'],          // Col 1
+        ['five_bamboo', 'character'],   // Col 2
+        ['two_dots', 'bai'],            // Col 3
+        ['fa', 'five_bamboo']           // Col 4
+      ];
+      let candidates = colPools[c].filter(id => !forbiddenIds.includes(id));
+      if (candidates.length === 0) {
+        candidates = ['two_dots', 'character', 'five_bamboo'].filter(id => !forbiddenIds.includes(id));
+      }
+      const chosenId = candidates[(r + c * 2) % candidates.length] || 'two_dots';
+      const sym = SYMBOLS.find(s => s.id === chosenId) || SYMBOLS[6];
+      return { ...sym, isGold: false };
+    }
+
     function applyStrictGridOutcome(outcome) {
+      currentBigWinPlan = null;
+
       if (outcome === 'zonk') {
-        // 100% DIJAMIN KALAH TOTAL: Tidak ada Wild, tidak ada Scatter beruntun, tidak ada 3-match
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
             gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
           }
         }
       } else if (outcome === 'near_miss') {
-        // NEAR MISS: Tepat 2 Scatter (Reel 1 & Reel 2), Reel 3 meleset di baris ekstra
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
             gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
@@ -1088,49 +1450,58 @@
         }
         gridMatrix[0][1] = { ...SYMBOLS[8], isScatter: true, isGold: false };
         gridMatrix[1][2] = { ...SYMBOLS[8], isScatter: true, isGold: false };
-        gridMatrix[2][0] = { ...SYMBOLS[8], isScatter: true, isGold: false }; // Baris paling atas, meleset!
+        gridMatrix[2][0] = { ...SYMBOLS[8], isScatter: true, isGold: false };
       } else if (outcome === 'ldw') {
-        // LOSS DISGUISED AS WIN: Sambungkan HANYA 1 kombinasi kecil (5 Wan, payout 2)
-        // Di Reel 2 ubinnya emas -> jadi Wild untuk kaskade kedua (2 Dots, payout 1)
-        // Total Payout = (1*2 * (bet/20) * 1) + (1*1 * (bet/20) * 2) = 0.1 bet + 0.1 bet = 0.2 bet (Rp 2.000 dari bet Rp 10.000)
-        // RUGI BERSIH Rp 8.000, tapi bersuara dan beranimasi perayaan kaskade!
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
             gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
           }
         }
-        // Pasang 5 Wan di baris 1
         gridMatrix[0][1] = { ...SYMBOLS[5], isGold: false };
-        gridMatrix[1][1] = { ...SYMBOLS[5], isGold: true }; // Emas!
+        gridMatrix[1][1] = { ...SYMBOLS[5], isGold: true };
         gridMatrix[2][1] = { ...SYMBOLS[5], isGold: false };
       } else if (outcome === 'big_win' || outcome === 'win_hook') {
-        // 💰 MENANG BESAR (SENSATIONAL BIG WIN):
-        // Sambungan ubin Naga Hijau (Fa) 5 Reel dengan 16 WAYS + Transformasi Wild Emas!
+        // DYNAMIC PROCEDURAL BIG WIN (Variasi simbol & cara menang realistis)
+        const highSymbols = [SYMBOLS[0], SYMBOLS[1], SYMBOLS[2], SYMBOLS[3]]; // Fa, Zhong, Bai, 8-Dots
+        const primarySym = highSymbols[Math.floor(Math.random() * 3)]; // Fa (50x), Zhong (40x), or Bai (30x)
+        
+        // Pola Ways acak: 8 Cara, 12 Cara, 16 Cara, 24 Cara, 36 Cara, atau 48 Cara
+        const patterns = [
+          [2, 2, 2, 1, 1], // 8 ways
+          [2, 2, 3, 1, 1], // 12 ways
+          [2, 2, 2, 2, 1], // 16 ways
+          [3, 2, 2, 2, 1], // 24 ways
+          [2, 3, 3, 2, 1], // 36 ways
+          [3, 2, 2, 2, 2]  // 48 ways
+        ];
+        const waysCounts = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // Isi latar belakang dengan ubin aman tanpa primarySym
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
-            gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
+            gridMatrix[c][r] = getSafeNonMatchingTile(c, r, [primarySym.id]);
           }
         }
-        // Reel 0: 2 ubin Fa (baris 1, 2)
-        gridMatrix[0][1] = { ...SYMBOLS[0], isGold: false };
-        gridMatrix[0][2] = { ...SYMBOLS[0], isGold: false };
 
-        // Reel 1: 2 ubin Fa (baris 1 biasa, baris 2 EMAS)
-        gridMatrix[1][1] = { ...SYMBOLS[0], isGold: false };
-        gridMatrix[1][2] = { ...SYMBOLS[0], isGold: true };
+        // Tempatkan primarySym sesuai jumlah ubin per reel
+        for (let c = 0; c < 5; c++) {
+          const needed = waysCounts[c];
+          for (let k = 0; k < needed; k++) {
+            const rowIdx = (k + 1) % reelRows[c];
+            const isGold = (c === 1 || c === 2) && (k === 0); // 1 ubin emas di Reel 2 / Reel 3
+            gridMatrix[c][rowIdx] = { ...primarySym, isGold: isGold };
+          }
+        }
 
-        // Reel 2: 2 ubin Fa (baris 1 biasa, baris 2 EMAS)
-        gridMatrix[2][1] = { ...SYMBOLS[0], isGold: false };
-        gridMatrix[2][2] = { ...SYMBOLS[0], isGold: true };
+        // Tentukan simbol kaskade ke-2 yang akan menyambung dengan Wild hasil emas
+        const remainingPool = [SYMBOLS[1], SYMBOLS[2], SYMBOLS[3], SYMBOLS[4]].filter(s => s.id !== primarySym.id);
+        const secondarySym = remainingPool[Math.floor(Math.random() * remainingPool.length)] || SYMBOLS[1];
 
-        // Reel 3: 2 ubin Fa (baris 1, 2)
-        gridMatrix[3][1] = { ...SYMBOLS[0], isGold: false };
-        gridMatrix[3][2] = { ...SYMBOLS[0], isGold: false };
-
-        // Reel 4: 1 ubin Fa (baris 1)
-        gridMatrix[4][1] = { ...SYMBOLS[0], isGold: false };
+        currentBigWinPlan = {
+          primarySym: primarySym,
+          secondarySym: secondarySym
+        };
       } else if (outcome === 'scatter_bonus') {
-        // 3 Scatter memicu 10 Free Spins
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
             gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
@@ -1140,7 +1511,6 @@
         gridMatrix[1][2] = { ...SYMBOLS[8], isScatter: true, isGold: false };
         gridMatrix[2][2] = { ...SYMBOLS[8], isScatter: true, isGold: false };
       } else {
-        // Default aman: Zonk
         for (let c = 0; c < 5; c++) {
           for (let r = 0; r < reelRows[c]; r++) {
             gridMatrix[c][r] = getGuaranteedZonkTile(c, r);
@@ -1159,11 +1529,11 @@
         const missing = reelRows[c] - remaining.length;
         const newTiles = [];
         for (let i = 0; i < missing; i++) {
-          if (outcome === 'big_win' && (c === 0 || c === 3)) {
-            // Drop Zhong (Red Dragon) so Wilds connect for second cascade
-            newTiles.push({ ...SYMBOLS[1], isGold: false });
+          if (outcome === 'big_win' && currentBigWinPlan && (c === 0 || c === 3 || c === 4)) {
+            // Drop secondarySym menyambung dengan WILD di Reel 1 & 2
+            newTiles.push({ ...currentBigWinPlan.secondarySym, isGold: false });
           } else {
-            newTiles.push(getGuaranteedZonkTile(c, i));
+            newTiles.push(getSafeNonMatchingTile(c, i, []));
           }
         }
 
@@ -1205,7 +1575,15 @@
           }
           const symPay = targetSym.pays[chainLen] || 0;
           totalBasePayout += ways * symPay;
-          winningWays.push({ symbol: targetSym.name, chain: chainLen, ways, payout: ways * symPay });
+          winningWays.push({
+            id: targetSym.id,
+            icon: targetSym.icon,
+            name: targetSym.name,
+            chain: chainLen,
+            ways: ways,
+            symPay: symPay,
+            payout: ways * symPay
+          });
         }
       }
 
@@ -1241,6 +1619,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       initReelsBoard();
       updateMultiplierDisplay();
+      updateBetDisplays();
       initConnection();
     });
   </script>
