@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend Admin - Remote Control Mahjong Ways 2</title>
+  <!-- PeerJS for live WebRTC communication with player -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --card-bg: #161926;
+      --card-border: #262c42;
+      --accent: #e63946;
+      --gold: #f5b324;
+      --green: #52c41a;
+      --blue: #1890ff;
+      --text: #f0f2f5;
+      --text-muted: #8c93a3;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .admin-container {
+      max-width: 960px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1f2438 0%, #161926 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .badge-admin {
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: #11141e;
+      border: 1px solid #2d354d;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.online { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .dot.offline { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+
+    /* Share Link Box */
+    .link-share-card {
+      background: #121522;
+      border: 1px dashed #3a4568;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .link-input {
+      flex: 1;
+      min-width: 250px;
+      background: #090a10;
+      border: 1px solid #2d344d;
+      color: var(--gold);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .btn-copy {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    /* Telemetry Grid */
+    .telemetry-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .tele-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      border-left: 4px solid #4a5568;
+    }
+
+    .tele-card.danger { border-left-color: var(--accent); }
+    .tele-card.warning { border-left-color: var(--gold); }
+    .tele-card.success { border-left-color: var(--green); }
+
+    .tele-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .tele-number {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    /* ACTION TRIGGER BOX (SAAT AYAH MENEKAN PUTAR) */
+    .action-box {
+      background: linear-gradient(180deg, #221417 0%, #171118 100%);
+      border: 2px solid var(--accent);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 0 25px rgba(230, 57, 70, 0.25);
+      position: relative;
+    }
+
+    .action-box.waiting-spin {
+      animation: alertBorder 1s infinite alternate;
+    }
+
+    .action-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .action-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .countdown-tag {
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 20px;
+      display: none;
+    }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+
+    .decision-btn {
+      background: #252b3d;
+      border: 1px solid #3c4663;
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+
+    .decision-btn:hover {
+      background: #333b54;
+      border-color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    .decision-btn.active-choice {
+      border-color: var(--green);
+      background: #1b3824;
+      box-shadow: 0 0 12px rgba(82, 196, 26, 0.4);
+    }
+
+    .decision-btn strong {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .decision-btn span {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    /* Auto-Preset Mode Box */
+    .preset-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+    }
+
+    .preset-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .preset-chip {
+      background: #10121a;
+      border: 1px solid #283047;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .preset-chip.active {
+      border-color: var(--gold);
+      background: #302613;
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    /* Live Activity Log */
+    .log-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+    }
+
+    .log-list {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .log-item {
+      padding: 6px 10px;
+      background: #0c0e14;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      border-left: 3px solid #4a5568;
+    }
+
+    .log-item.ldw { border-left-color: var(--gold); }
+    .log-item.zonk { border-left-color: var(--accent); }
+    .log-item.near_miss { border-left-color: #722ed1; }
+    .log-item.win { border-left-color: var(--green); }
+
+    /* Cheat-sheet Edukasi untuk Ayah */
+    .edu-sheet {
+      background: #111827;
+      border-left: 4px solid var(--blue);
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @keyframes alertBorder {
+      0% { border-color: var(--accent); box-shadow: 0 0 15px rgba(230, 57, 70, 0.3); }
+      100% { border-color: #ff7875; box-shadow: 0 0 30px rgba(230, 57, 70, 0.7); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+
+    <!-- Header & Status Koneksi -->
+    <header>
+      <div>
+        <span class="badge-admin">KONTROL BACKEND (ANAK)</span>
+        <h2 style="font-size: 17px; margin-top: 4px;">Remote Pengendali Mahjong Ways 2</h2>
+      </div>
+
+      <div class="status-pill" id="connPill">
+        <span class="dot offline" id="connDot"></span>
+        <span id="connText">Menunggu Ayah Membuka Game...</span>
+      </div>
+    </header>
+
+    <!-- Share Link Card -->
+    <div class="link-share-card">
+      <div style="font-size: 12px; font-weight: 700;">
+        📲 Link Game untuk Ayah (Buka di HP Ayah):
+      </div>
+      <input type="text" class="link-input" id="playerGameLink" readonly>
+      <button class="btn-copy" onclick="copyPlayerLink()">Salin Link</button>
+    </div>
+
+    <!-- Live Telemetry Monitor -->
+    <div class="telemetry-row">
+      <div class="tele-card warning">
+        <div class="tele-title">Saldo Ayah Saat Ini</div>
+        <div class="tele-number" id="admPlayerBalance" style="color: var(--gold);">Rp 100.000</div>
+      </div>
+
+      <div class="tele-card">
+        <div class="tele-title">Taruhan (Bet) yang Dipasang</div>
+        <div class="tele-number" id="admPlayerBet">Rp 10.000</div>
+      </div>
+
+      <div class="tele-card danger">
+        <div class="tele-title">Total Uang Disedot (Kerugian Riil)</div>
+        <div class="tele-number" id="admTotalLoss" style="color: var(--accent);">- Rp 0</div>
+      </div>
+
+      <div class="tele-card">
+        <div class="tele-title">Total Putaran Ayah</div>
+        <div class="tele-number" id="admSpinCount">0x</div>
+      </div>
+    </div>
+
+    <!-- ACTION TRIGGER BOX: KEPUTUSAN SAAT AYAH MENANG/KALAH -->
+    <div class="action-box" id="actionBox">
+      <div class="action-header">
+        <div class="action-title">
+          <span id="actionIcon">⏳</span>
+          <span id="actionStatusText">Menunggu Ayah Menekan Tombol Putar...</span>
+        </div>
+        <span class="countdown-tag" id="countdownTag">Sisa Waktu: 3s</span>
+      </div>
+
+      <p style="font-size: 12px; color: var(--text-muted);">
+        Pilih salah satu tombol di bawah untuk menentukan hasil putaran di layar HP Ayah:
+      </p>
+
+      <div class="decision-grid">
+        <button class="decision-btn" onclick="sendOutcomeDecision('zonk')">
+          <strong style="color: var(--accent);">🛑 KALAH TOTAL (ZONK)</strong>
+          <span>Ayah zonk, uang disedot tanpa ada simbol yang pecah.</span>
+        </button>
+
+        <button class="decision-btn" onclick="sendOutcomeDecision('ldw')">
+          <strong style="color: var(--gold);">🎭 MENANG PALSU (LDW)</strong>
+          <span>Pecah runtuh sampai pengali x3, menang Rp 3.500 dari bet Rp 10.000 (Rugi Rp 6.500 tapi musik heboh!).</span>
+        </button>
+
+        <button class="decision-btn" onclick="sendOutcomeDecision('near_miss')">
+          <strong style="color: #b37feb;">😱 HAMPIR KENA (NEAR MISS)</strong>
+          <span>2 Scatter muncul, Reel 3 melambat dengan debar jantung lalu meleset 1 baris.</span>
+        </button>
+
+        <button class="decision-btn" onclick="sendOutcomeDecision('win_hook')">
+          <strong style="color: var(--green);">🎣 PANCINGAN MENANG</strong>
+          <span>Menang Rp 25.000 agar Ayah merasa 'hoki' dan terus memasang.</span>
+        </button>
+
+        <button class="decision-btn" onclick="sendOutcomeDecision('scatter_bonus')">
+          <strong style="color: #ffd666;">📜 SCATTER FREE SPINS</strong>
+          <span>Dapat 3 Scatter (10 Free Spins pengali x10) untuk buktikan bonus tetap tidak menutup modal.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Preset Auto-Mode (Jika Anak Tidak Mau Klik Tiap Detik) -->
+    <div class="preset-card">
+      <div style="font-size: 13px; font-weight: 800; color: #fff;">
+        ⚙️ Mode Otomatis (Jika Anda tidak sempat klik manual tiap putaran):
+      </div>
+      <div class="preset-options">
+        <div class="preset-chip active" id="pManual" onclick="setPresetMode('manual')">
+          🎯 Manual: Saya Tentukan Tiap Putaran
+        </div>
+        <div class="preset-chip" id="pZonk" onclick="setPresetMode('zonk')">
+          🛑 Selalu Kalah (Zonk Total)
+        </div>
+        <div class="preset-chip" id="pLdw" onclick="setPresetMode('ldw')">
+          🎭 Selalu Menang Palsu (LDW)
+        </div>
+        <div class="preset-chip" id="pReal" onclick="setPresetMode('real_slot')">
+          🎰 Acak Kasir Normal (85% Kalah/LDW, 15% Menang)
+        </div>
+      </div>
+    </div>
+
+    <!-- Script Edukasi & Penjelasan Langsung ke Ayah -->
+    <div class="edu-sheet" id="eduSheet">
+      💡 <b>Panduan Bicara Saat Ini:</b> Ayah sedang melihat permainan Mahjong Ways 2 biasa. Di layarnya <b>TIDAK ADA</b> satupun tulisan edukasi atau cheat. Saat Ayah memencet tombol PUTAR di HP-nya, kotak merah di atas akan menyala berkedip. Anda tinggal memilih nasib putarannya (misal: <i>Menang Palsu</i> atau <i>Near Miss</i>) lalu perhatikan reaksinya!
+    </div>
+
+    <!-- Live Activity Log -->
+    <div class="log-card">
+      <div style="font-size: 13px; font-weight: 800; color: #fff;">
+        📜 Riwayat Putaran Ayah (Log Realtime):
+      </div>
+      <div class="log-list" id="activityLog">
+        <div class="log-item">
+          <span>Sistem siap. Menunggu koneksi dari HP Ayah...</span>
+          <span>--:--:--</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let peer = null;
+    let connectedPlayer = null;
+    let currentPreset = 'manual'; // 'manual', 'zonk', 'ldw', 'real_slot'
+    let countdownTimer = null;
+    let spinCount = 0;
+    const initialDeposit = 100000;
+    let lastPlayerBalance = 100000;
+    let lastPlayerBet = 10000;
+
+    // Room ID dari URL (default: 'bapa')
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomKey = urlParams.get('room') || 'bapa';
+
+    function initAdminPeer() {
+      // Admin Peer ID: 'mw2-admin-' + roomKey
+      const adminPeerId = `mw2-admin-${roomKey}`;
+      peer = new Peer(adminPeerId);
+
+      peer.on('open', (id) => {
+        updatePlayerGameUrl();
+      });
+
+      peer.on('connection', (conn) => {
+        connectedPlayer = conn;
+        setConnectionStatus(true);
+        addLog("HP Ayah berhasil terhubung ke server!", "win");
+
+        conn.on('data', (data) => {
+          handlePlayerData(data);
+        });
+
+        conn.on('close', () => {
+          setConnectionStatus(false);
+          addLog("Koneksi HP Ayah terputus.", "zonk");
+          connectedPlayer = null;
+        });
+      });
+
+      peer.on('error', (err) => {
+        console.error("Peer error:", err);
+      });
+    }
+
+    function updatePlayerGameUrl() {
+      const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '').replace(/\/$/, '') + '/';
+      const playerUrl = `${baseUrl}?room=${roomKey}`;
+      document.getElementById('playerGameLink').value = playerUrl;
+    }
+
+    function copyPlayerLink() {
+      const copyText = document.getElementById('playerGameLink');
+      copyText.select();
+      navigator.clipboard.writeText(copyText.value);
+      alert("Link berhasil disalin! Kirimkan atau buka link ini di HP Ayah.");
+    }
+
+    function setConnectionStatus(isOnline) {
+      const dot = document.getElementById('connDot');
+      const text = document.getElementById('connText');
+      if (isOnline) {
+        dot.className = 'dot online';
+        text.innerText = '🟢 HP Ayah Sedang Terhubung!';
+        text.style.color = 'var(--green)';
+      } else {
+        dot.className = 'dot offline';
+        text.innerText = '🔴 Menunggu Ayah Membuka Game...';
+        text.style.color = 'var(--accent)';
+      }
+    }
+
+    function handlePlayerData(msg) {
+      if (msg.type === 'PLAYER_STATE') {
+        lastPlayerBalance = msg.balance;
+        lastPlayerBet = msg.bet;
+        updateTelemetry();
+      } else if (msg.type === 'SPIN_REQUEST') {
+        spinCount++;
+        lastPlayerBet = msg.bet;
+        lastPlayerBalance = msg.balance;
+        updateTelemetry();
+
+        onSpinRequestedByPlayer();
+      } else if (msg.type === 'SPIN_COMPLETED') {
+        lastPlayerBalance = msg.balance;
+        updateTelemetry();
+        onSpinFinished(msg.win, msg.outcome);
+      }
+    }
+
+    function onSpinRequestedByPlayer() {
+      const box = document.getElementById('actionBox');
+      const title = document.getElementById('actionStatusText');
+      const icon = document.getElementById('actionIcon');
+      const cd = document.getElementById('countdownTag');
+
+      box.classList.add('waiting-spin');
+      icon.innerText = '🚨';
+      title.innerText = `AYAH MENEKAN PUTAR (Bet: Rp ${lastPlayerBet.toLocaleString('id-ID')})! TENTUKAN HASIL:`;
+      cd.style.display = 'inline-block';
+
+      // Suara notifikasi kecil di HP anak
+      playAdminChime();
+
+      if (currentPreset !== 'manual') {
+        // Mode otomatis
+        let autoOutcome = 'zonk';
+        if (currentPreset === 'ldw') autoOutcome = 'ldw';
+        else if (currentPreset === 'real_slot') {
+          const r = Math.random();
+          if (r < 0.5) autoOutcome = 'zonk';
+          else if (r < 0.85) autoOutcome = 'ldw';
+          else autoOutcome = 'win_hook';
+        }
+        sendOutcomeDecision(autoOutcome);
+        return;
+      }
+
+      // Hitung mundur 3 detik jika anak tidak klik, default ke zonk
+      let timeLeft = 3;
+      cd.innerText = `Sisa Waktu: ${timeLeft}s`;
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        timeLeft--;
+        cd.innerText = `Sisa Waktu: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(countdownTimer);
+          sendOutcomeDecision('zonk');
+        }
+      }, 1000);
+    }
+
+    function sendOutcomeDecision(outcome) {
+      clearInterval(countdownTimer);
+      document.getElementById('countdownTag').style.display = 'none';
+      document.getElementById('actionBox').classList.remove('waiting-spin');
+      document.getElementById('actionIcon').innerText = '✅';
+      document.getElementById('actionStatusText').innerText = `Hasil Terkirim ke Layar Ayah: [${outcome.toUpperCase()}]`;
+
+      if (connectedPlayer && connectedPlayer.open) {
+        connectedPlayer.send({
+          type: 'SET_OUTCOME',
+          outcome: outcome
+        });
+      }
+
+      updateEduSheet(outcome);
+    }
+
+    function onSpinFinished(winAmount, outcome) {
+      const timeStr = new Date().toLocaleTimeString();
+      let outcomeDesc = outcome.toUpperCase();
+      let typeClass = 'zonk';
+
+      if (outcome === 'ldw') {
+        outcomeDesc = `MENANG PALSU (Menang Rp ${winAmount.toLocaleString('id-ID')}, Rugi -Rp ${(lastPlayerBet - winAmount).toLocaleString('id-ID')})`;
+        typeClass = 'ldw';
+      } else if (outcome === 'near_miss') {
+        outcomeDesc = `NEAR MISS (2 Scatter Nyaris)`;
+        typeClass = 'near_miss';
+      } else if (outcome === 'scatter_bonus') {
+        outcomeDesc = `FREE SPINS (3 Scatter)`;
+        typeClass = 'win';
+      } else if (winAmount > lastPlayerBet) {
+        outcomeDesc = `MENANG BESAR (+Rp ${winAmount.toLocaleString('id-ID')})`;
+        typeClass = 'win';
+      }
+
+      addLog(`Putaran #${spinCount}: ${outcomeDesc}`, typeClass);
+    }
+
+    function updateTelemetry() {
+      document.getElementById('admPlayerBalance').innerText = `Rp ${lastPlayerBalance.toLocaleString('id-ID')}`;
+      document.getElementById('admPlayerBet').innerText = `Rp ${lastPlayerBet.toLocaleString('id-ID')}`;
+      document.getElementById('admSpinCount').innerText = `${spinCount}x`;
+
+      const loss = initialDeposit - lastPlayerBalance;
+      const lossEl = document.getElementById('admTotalLoss');
+      if (loss >= 0) {
+        lossEl.innerText = `- Rp ${loss.toLocaleString('id-ID')}`;
+        lossEl.style.color = 'var(--accent)';
+      } else {
+        lossEl.innerText = `+ Rp ${Math.abs(loss).toLocaleString('id-ID')}`;
+        lossEl.style.color = 'var(--green)';
+      }
+    }
+
+    function setPresetMode(mode) {
+      currentPreset = mode;
+      ['pManual', 'pZonk', 'pLdw', 'pReal'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+
+      if (mode === 'manual') document.getElementById('pManual').classList.add('active');
+      else if (mode === 'zonk') document.getElementById('pZonk').classList.add('active');
+      else if (mode === 'ldw') document.getElementById('pLdw').classList.add('active');
+      else if (mode === 'real_slot') document.getElementById('pReal').classList.add('active');
+    }
+
+    function updateEduSheet(outcome) {
+      const sheet = document.getElementById('eduSheet');
+      if (outcome === 'ldw') {
+        sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Menang Palsu):</b><br>
+        <i>"Yah, barusan lihat kan musiknya heboh dan ubinnya pecah berkali-kali? Tapi coba cek saldo Ayah, uang yang kembali cuma 3.500 padahal pasang 10 ribu. Artinya barusan Ayah **RUGI 6.500 rupiah**, tapi musiknya dibuat seolah-olah Ayah menang. Inilah trik bandar biar Ayah merasa hoki terus padahal uangnya disedot."</i>`;
+      } else if (outcome === 'near_miss') {
+        sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Near Miss):</b><br>
+        <i>"Yah, lihat tadi Scatter-nya meleset cuma 1 kotak di Reel 3 dengan suara debar jantung tegang kan? Itu bukan kebetulan hampir dapat jackpot. Itu sudah diprogram di server supaya otak Ayah penasaran dan nggak mau berhenti memencet tombol."</i>`;
+      } else if (outcome === 'zonk') {
+        sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Zonk):</b><br>
+        <i>"Lihat, putaran ini uang 10 ribu langsung hilang tanpa hasil. Kalau diteruskan 20-30 putaran lagi, uang 200 ribu - 300 ribu lenyap dalam waktu kurang dari 2 menit saja."</i>`;
+      } else if (outcome === 'scatter_bonus') {
+        sheet.innerHTML = `💡 <b>Panduan Bicara ke Ayah Sekarang (Free Spins):</b><br>
+        <i>"Nah, ini Free Spin pengali x10 yang sering diharap-harapkan. Coba perhatikan total kemenangannya nanti. Di dunia nyata, untuk dapat Free Spin ini Ayah harus membuang ratusan putaran dulu, jadi hasil Free Spin ini tetap tidak bisa menutupi modal ratusan ribu yang sudah amblas sebelumnya."</i>`;
+      }
+    }
+
+    function addLog(text, typeClass) {
+      const log = document.getElementById('activityLog');
+      const item = document.createElement('div');
+      item.className = `log-item ${typeClass || ''}`;
+      item.innerHTML = `<span>${text}</span><span>${new Date().toLocaleTimeString()}</span>`;
+      log.prepend(item);
+    }
+
+    function playAdminChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch (e) {}
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initAdminPeer();
+      updatePlayerGameUrl();
+    });
+  </script>
+</body>
+</html>
